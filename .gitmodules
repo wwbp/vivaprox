@@ -1,0 +1,6 @@
+[submodule "examples/pipecat"]
+	path = examples/pipecat
+	url = https://github.com/pipecat-ai/pipecat-quickstart.git
+[submodule "examples/pipecat-quickstart"]
+	path = examples/pipecat-quickstart
+	url = https://github.com/pipecat-ai/pipecat-quickstart.git

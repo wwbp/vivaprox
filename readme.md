@@ -16,7 +16,3 @@ Admin Space
    1. Manage Access & Create Sessions  
    2. Design Agent Conversation Flows
    3. Export Data Corpus
-
-Curated Using
-
-- Python package and project manager <https://docs.astral.sh/uv/>
