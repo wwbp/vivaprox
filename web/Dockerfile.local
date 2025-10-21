@@ -1,0 +1,12 @@
+FROM node:latest
+
+# Install pnpm globally
+RUN npm install -g pnpm
+
+WORKDIR /web
+
+# Set environment to development
+ENV NODE_ENV=development
+
+# Command to run the development server
+CMD ["sh", "-c", "pnpm install && pnpm dev"]

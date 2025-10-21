@@ -6,3 +6,12 @@ services:
     # Mount your whole workspace at a consistent path
     volumes:
       - .:/workspace:cached
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile.local
+    volumes:
+      - ./web:/web:cached
+    ports:
+      - "3000:3000"
