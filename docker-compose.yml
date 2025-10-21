@@ -3,15 +3,24 @@ services:
     image: ubuntu:24.04
     # Keep container alive so VS Code can attach
     command: bash -lc "sleep infinity"
-    # Mount your whole workspace at a consistent path
     volumes:
       - .:/workspace:cached
 
-  web:
+  server-media:
+    image: livekit/livekit-server:latest
+    command: ["--dev", "--bind", "0.0.0.0"]
+    ports:
+      - "7880:7880/tcp"
+      - "7881:7881/tcp"
+      - "7882:7882/udp"
+
+  web-client:
     build:
-      context: ./web
+      context: ./web-client
       dockerfile: Dockerfile.local
     volumes:
-      - ./web:/web:cached
+      - ./web-client:/web:cached
     ports:
       - "3000:3000"
+    depends_on:
+      - server-media

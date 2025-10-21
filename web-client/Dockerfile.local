@@ -5,6 +5,7 @@ RUN npm install -g pnpm
 
 WORKDIR /web
 
+
 # Set environment to development
 ENV NODE_ENV=development
 
