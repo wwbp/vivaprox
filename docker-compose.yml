@@ -1,0 +1,8 @@
+services:
+  bastion:
+    image: ubuntu:24.04
+    # Keep container alive so VS Code can attach
+    command: bash -lc "sleep infinity"
+    # Mount your whole workspace at a consistent path
+    volumes:
+      - .:/workspace:cached
