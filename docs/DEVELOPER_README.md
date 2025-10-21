@@ -16,4 +16,6 @@
 # Development Setup
 
 1. local development
-    1. docker-compose up --build
+    1. vscode-devcontainer
+    - or
+    1. $ docker-compose up --build
