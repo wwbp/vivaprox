@@ -9,9 +9,9 @@
 2. Agent Server- FastAPI
     1. Pipeline Orchestrator- Pipecat
     2. Agent Processor- Kani
-3. Client-
-    1. Web Client- React
-    2. Telephony Client- Twilio
+3. Client Gateway-
+    1. Web- React
+    2. Telephony- Twilio
 
 # Development Setup
 
