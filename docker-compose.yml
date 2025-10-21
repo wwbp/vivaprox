@@ -6,13 +6,24 @@ services:
     volumes:
       - .:/workspace:cached
 
-  server-media:
+  transport-server:
     image: livekit/livekit-server:latest
     command: ["--dev", "--bind", "0.0.0.0"]
     ports:
       - "7880:7880/tcp"
       - "7881:7881/tcp"
       - "7882:7882/udp"
+
+  agent-runner:
+    build:
+      context: ./agent-runner
+      dockerfile: Dockerfile.local
+    volumes:
+      - ./agent-runner:/app:cached
+    ports:
+      - "7860:7860"
+    depends_on:
+      - transport-server
 
   web-client:
     build:
@@ -23,4 +34,4 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - server-media
+      - transport-server

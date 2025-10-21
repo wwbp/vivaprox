@@ -7,3 +7,6 @@
 [submodule "examples/agent-starter-react"]
 	path = examples/agent-starter-react
 	url = https://github.com/abhay97ps/agent-starter-react.git
+[submodule "examples/agent-starter-python"]
+	path = examples/agent-starter-python
+	url = https://github.com/livekit-examples/agent-starter-python.git
