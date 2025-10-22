@@ -1,8 +1,3 @@
-# Developer Playbook
-
-- Python package and project manager <https://docs.astral.sh/uv/>
-- Pipecat Quickstart in /examples/
-
 # Architecure
 
 1. Media Server- Livekit
