@@ -44,6 +44,27 @@ export async function POST(req: Request) {
       agentName
     );
 
+    // Tell the FastAPI server to start the bot
+    const apiUrl = process.env.BOT_RUNNER_URL || 'http://localhost:7860/';
+    console.log('Contacting bot runner at:', apiUrl);
+    try {
+      const botResponse = await fetch(`${apiUrl}start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          room_name: roomName,
+          room_config: body.room_config,
+          custom_data: body.custom_data,
+        }),
+      });
+
+      if (!botResponse.ok) {
+        console.error('Failed to start bot:', await botResponse.text());
+      }
+    } catch (error) {
+      console.error('Error contacting bot runner:', error);
+    }
+
     // Return connection details
     const data: ConnectionDetails = {
       serverUrl: LIVEKIT_URL,

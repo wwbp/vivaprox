@@ -1,5 +1,8 @@
 FROM dailyco/pipecat-base:latest AS base
 
+# Install ffmpeg for audio processing
+RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
+
 # Bring in uv (fast Python installer) without leaving it in a builder image.
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
@@ -28,4 +31,4 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 EXPOSE 7860
 
 # Start your runner (change if your entrypoint differs)
-CMD ["uv", "run", "python", "bot.py"]
+CMD ["uv", "run", "python", "runner.py"]
