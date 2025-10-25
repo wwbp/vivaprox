@@ -7,3 +7,6 @@
 [submodule "examples/agent-starter-python"]
 	path = examples/agent-starter-python
 	url = https://github.com/livekit-examples/agent-starter-python.git
+[submodule "examples/rag-on-postgres"]
+	path = examples/rag-on-postgres
+	url = https://github.com/abhay97ps/RAG-on-PostgreSQL.git
