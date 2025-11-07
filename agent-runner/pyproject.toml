@@ -8,7 +8,7 @@ dependencies = [
     "certifi>=2025.10.5",
     "fastapi>=0.119.1",
     "loguru>=0.7.3",
-    "pipecat-ai[cartesia,deepgram,livekit,local-smart-turn,openai,silero]>=0.0.90",
+    "pipecat-ai[cartesia,livekit,local-smart-turn,openai,silero,whisper]>=0.0.90",
     "python-dotenv>=1.1.1",
     "uvicorn>=0.38.0",
 ]
