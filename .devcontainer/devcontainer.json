@@ -8,7 +8,7 @@
   //     // Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
   //     "dockerfile": "Dockerfile"
   //   }
-  "dockerComposeFile": ["../docker-compose.yml"],
+  "dockerComposeFile": ["./docker-compose.yml"],
   // The 'service' property is the name of the service for the container that VS Code should
   // use. Update this value and .devcontainer/docker-compose.yml to the real service name.
   "service": "bastion",

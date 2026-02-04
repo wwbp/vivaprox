@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { AccessToken, type AccessTokenOptions, type VideoGrant } from 'livekit-server-sdk';
 import { RoomConfiguration } from '@livekit/protocol';
+import { getServerConfig, requireEnv } from '@/lib/config/server';
 
 type ConnectionDetails = {
   serverUrl: string;
@@ -9,25 +10,15 @@ type ConnectionDetails = {
   participantToken: string;
 };
 
-// NOTE: you are expected to define the following environment variables in `.env.local`:
-const API_KEY = process.env.LIVEKIT_API_KEY;
-const API_SECRET = process.env.LIVEKIT_API_SECRET;
-const LIVEKIT_URL = process.env.LIVEKIT_URL;
-
 // don't cache the results
 export const revalidate = 0;
 
 export async function POST(req: Request) {
   try {
-    if (LIVEKIT_URL === undefined) {
-      throw new Error('LIVEKIT_URL is not defined');
-    }
-    if (API_KEY === undefined) {
-      throw new Error('LIVEKIT_API_KEY is not defined');
-    }
-    if (API_SECRET === undefined) {
-      throw new Error('LIVEKIT_API_SECRET is not defined');
-    }
+    const config = getServerConfig();
+    const livekitUrl = requireEnv(config.livekitUrl, 'LIVEKIT_URL');
+    const apiKey = requireEnv(config.livekitApiKey, 'LIVEKIT_API_KEY');
+    const apiSecret = requireEnv(config.livekitApiSecret, 'LIVEKIT_API_SECRET');
 
     // Parse agent configuration from request body
     const body = await req.json();
@@ -41,11 +32,14 @@ export async function POST(req: Request) {
     const participantToken = await createParticipantToken(
       { identity: participantIdentity, name: participantName },
       roomName,
-      agentName
+      agentName,
+      apiKey,
+      apiSecret
     );
 
     // Tell the FastAPI server to start the bot
-    const apiUrl = process.env.BOT_RUNNER_URL || 'http://localhost:7860/';
+    const botRunnerUrl = requireEnv(config.botRunnerUrl, 'BOT_RUNNER_URL');
+    const apiUrl = botRunnerUrl.endsWith('/') ? botRunnerUrl : `${botRunnerUrl}/`;
     console.log('Contacting bot runner at:', apiUrl);
     try {
       const botResponse = await fetch(`${apiUrl}start`, {
@@ -67,7 +61,7 @@ export async function POST(req: Request) {
 
     // Return connection details
     const data: ConnectionDetails = {
-      serverUrl: LIVEKIT_URL,
+      serverUrl: livekitUrl,
       roomName,
       participantToken: participantToken,
       participantName,
@@ -87,9 +81,11 @@ export async function POST(req: Request) {
 function createParticipantToken(
   userInfo: AccessTokenOptions,
   roomName: string,
-  agentName?: string
+  agentName: string | undefined,
+  apiKey: string,
+  apiSecret: string
 ): Promise<string> {
-  const at = new AccessToken(API_KEY, API_SECRET, {
+  const at = new AccessToken(apiKey, apiSecret, {
     ...userInfo,
     ttl: '15m',
   });

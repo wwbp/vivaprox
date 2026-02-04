@@ -1,6 +1,6 @@
 version: '3'
 output: interleaved
-dotenv: ['.env.local']
+dotenv: ['.env.web', '.env.web.local']
 
 tasks:
   post_create:

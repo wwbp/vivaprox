@@ -4,7 +4,7 @@ services:
     # Keep container alive so VS Code can attach
     command: bash -lc "sleep infinity"
     volumes:
-      - .:/workspace:cached
+      - ..:/workspace:cached
 
   transport-server:
     image: livekit/livekit-server:latest
@@ -16,10 +16,13 @@ services:
 
   agent-runner:
     build:
-      context: ./agent-runner
+      context: ../agent-runner
       dockerfile: Dockerfile.local
+    env_file:
+      - ../agent-runner/.env.runner
     volumes:
-      - ./agent-runner:/app:cached
+      - ../agent-runner:/app:cached
+      - agent-runner-venv:/app/.venv
     ports:
       - "7860:7860"
     depends_on:
@@ -27,11 +30,18 @@ services:
 
   web-client:
     build:
-      context: ./web-client
+      context: ../web-client
       dockerfile: Dockerfile.local
+    env_file:
+      - ../web-client/.env.web
     volumes:
-      - ./web-client:/web:cached
+      - ../web-client:/web:cached
+      - web-client-node-modules:/web/node_modules
     ports:
       - "3000:3000"
     depends_on:
       - transport-server
+
+volumes:
+  agent-runner-venv:
+  web-client-node-modules:

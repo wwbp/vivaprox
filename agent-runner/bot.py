@@ -1,9 +1,7 @@
 import asyncio
 import json
-import os
 import sys
 from loguru import logger
-from dotenv import load_dotenv
 
 from pipecat.audio.turn.smart_turn.base_smart_turn import SmartTurnParams
 from pipecat.audio.turn.smart_turn.local_smart_turn_v3 import LocalSmartTurnAnalyzerV3
@@ -22,13 +20,14 @@ from pipecat.pipeline.task import PipelineParams, PipelineTask
 from pipecat.processors.aggregators.llm_context import LLMContext
 from pipecat.processors.aggregators.llm_response_universal import LLMContextAggregatorPair
 from pipecat.services.cartesia.tts import CartesiaTTSService
+# from pipecat.services.whisper.stt import WhisperSTTService
 from pipecat.services.deepgram.stt import DeepgramSTTService
 from pipecat.services.openai.llm import OpenAILLMService
 from pipecat.transports.livekit.transport import LiveKitParams, LiveKitTransport
 
+from config import load_config, require
 from runner_types import LiveKitRunnerArguments
 
-load_dotenv(".env.local")
 logger.remove(0)
 logger.add(sys.stderr, level="DEBUG")
 
@@ -60,10 +59,14 @@ async def bot(runner_args: LiveKitRunnerArguments):
     )
 
     # Initialize your services
-    stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"))
-    llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
+    config = load_config()
+    # stt = WhisperSTTService()
+    stt = DeepgramSTTService(
+        api_key=require(config.deepgram_api_key, "DEEPGRAM_API_KEY")
+    )
+    llm = OpenAILLMService(api_key=require(config.openai_api_key, "OPENAI_API_KEY"))
     tts = CartesiaTTSService(
-        api_key=os.getenv("CARTESIA_API_KEY"),
+        api_key=require(config.cartesia_api_key, "CARTESIA_API_KEY"),
         voice_id="71a7ad14-091c-4e8e-a314-022ece01c121",
     )
 

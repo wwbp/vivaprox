@@ -1,27 +1,21 @@
-import asyncio
-import os
 import uuid
 from datetime import timedelta
 from typing import Dict, Any, Optional
 
-import aiohttp
 from fastapi import FastAPI, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from livekit import api
 from loguru import logger
-from dotenv import load_dotenv
 
+from config import load_config, require
 from runner_types import LiveKitRunnerArguments
 
-load_dotenv(".env.local")
+config = load_config()
 
 # These environment variables should match your Next.js client setup
-LIVEKIT_API_KEY = os.getenv("LIVEKIT_API_KEY")
-LIVEKIT_API_SECRET = os.getenv("LIVEKIT_API_SECRET")
-LIVEKIT_URL = os.getenv("LIVEKIT_URL")
-
-if not all([LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL]):
-    raise ValueError("Missing required LiveKit environment variables")
+LIVEKIT_API_KEY = require(config.livekit_api_key, "LIVEKIT_API_KEY")
+LIVEKIT_API_SECRET = require(config.livekit_api_secret, "LIVEKIT_API_SECRET")
+LIVEKIT_URL = require(config.livekit_url, "LIVEKIT_URL")
 
 
 def create_app():
