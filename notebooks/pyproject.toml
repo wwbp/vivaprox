@@ -3,13 +3,18 @@ name = "notebooks"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10,<3.11"
 dependencies = [
     "ipykernel>=7.1.0",
     "notebook>=7.5.3",
-    "numpy>=2.0.0",
+    "numpy>=1.23,<1.27",
+    "numba>=0.57,<0.60",
     "python-dotenv>=1.2.1",
+    "qwen-tts==0.0.5",
     "requests>=2.32.5",
+    "llvmlite>=0.40,<0.43",
+    "soundfile>=0.12.1",
+    "torch>=2.2.0",
     "sounddevice>=0.4.7",
     "websocket-client>=1.8.0",
 ]
