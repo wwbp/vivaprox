@@ -20,6 +20,7 @@ Create or update `notebooks/.env` (copy from `notebooks/.env.example`) and set:
 - `OPENAI_API_KEY`
 - `CARTESIA_API_KEY`
 - `DEEPGRAM_API_KEY`
+- `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) for Gemini Live
 
 3. Launch Jupyter Notebook:
 
@@ -46,3 +47,4 @@ Voice exploration (TTS / S2S):
 - `notebooks/tts_openai.ipynb`
 - `notebooks/tts_qwen.ipynb`
 - `notebooks/s2s_openai_realtime.ipynb`
+- `notebooks/s2s_gemini_live.ipynb`
