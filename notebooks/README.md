@@ -38,6 +38,7 @@ uv run jupyter lab
 
 - The virtual environment lives in `notebooks/.venv` and is ignored by git.
 - Store notebooks (`*.ipynb`) directly in this folder.
+- Audio outputs and run manifests are written to `notebooks/outputs/` with timestamps. This folder is gitignored.
 
 ## Notebook categories
 
