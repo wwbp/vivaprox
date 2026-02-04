@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Room, RoomEvent, TokenSource } from 'livekit-client';
 import { AppConfig } from '@/app-config';
 import { toastAlert } from '@/components/livekit/alert-toast';
+import { getClientConfig } from '@/lib/config/client';
 
 export function useRoom(appConfig: AppConfig) {
   const aborted = useRef(false);
@@ -39,8 +40,9 @@ export function useRoom(appConfig: AppConfig) {
   const tokenSource = useMemo(
     () =>
       TokenSource.custom(async () => {
+        const clientConfig = getClientConfig();
         const url = new URL(
-          process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? '/api/connection-details',
+          clientConfig.connectionDetailsEndpoint,
           window.location.origin
         );
 

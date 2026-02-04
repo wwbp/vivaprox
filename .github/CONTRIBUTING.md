@@ -1,16 +1,17 @@
-# Architecure
+# Contributing
 
-1. Media Server- Livekit
-2. Agent Server- FastAPI
-    1. Pipeline Orchestrator- Pipecat
-    2. Agent Processor- Kani
-3. Client Gateway-
-    1. Web- React
-    2. Telephony- Twilio
+**Architecture**
+1. Media server: LiveKit (`transport-server`).
+2. Agent service: FastAPI + Pipecat (`agent-runner`).
+3. Client: Next.js (`web-client`).
 
-# Development Setup
-
-1. local development
-    1. vscode-devcontainer
-    - or
-    1. $ docker-compose up --build
+**Local Development**
+1. Create env files.
+```bash
+cp agent-runner/.env.runner.example agent-runner/.env.runner
+cp web-client/.env.web.example web-client/.env.web
+```
+2. Start services.
+```bash
+make start
+```

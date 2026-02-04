@@ -13,12 +13,13 @@ import {
 import { useChatMessages } from '@/hooks/useChatMessages';
 import { useConnectionTimeout } from '@/hooks/useConnectionTimout';
 import { useDebugMode } from '@/hooks/useDebug';
+import { getClientConfig } from '@/lib/config/client';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../livekit/scroll-area/scroll-area';
 
 const MotionBottom = motion.create('div');
 
-const IN_DEVELOPMENT = process.env.NODE_ENV !== 'production';
+const IN_DEVELOPMENT = getClientConfig().inDevelopment;
 const BOTTOM_VIEW_MOTION_PROPS = {
   variants: {
     visible: {

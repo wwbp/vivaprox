@@ -6,6 +6,7 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { APP_CONFIG_DEFAULTS } from '@/app-config';
+import { getServerConfig } from '@/lib/config/server';
 import { getAppConfig } from '@/lib/utils';
 
 type Dimensions = {
@@ -17,6 +18,8 @@ type ImageData = {
   base64: string;
   dimensions: Dimensions;
 };
+
+const { vercelUrl } = getServerConfig();
 
 // Image metadata
 export const alt = 'About Acme';
@@ -54,7 +57,7 @@ async function loadFileData(filePath: string): Promise<ArrayBuffer> {
 
   // Fallback to fetching from public URL (works in production)
   const publicFilePath = filePath.replace('public/', '');
-  const fontUrl = `https://${process.env.VERCEL_URL}/${publicFilePath}`;
+  const fontUrl = `https://${vercelUrl}/${publicFilePath}`;
 
   const response = await fetch(fontUrl);
   if (!response.ok) {
