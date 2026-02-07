@@ -1,8 +1,0 @@
-.env*
-node_modules/
-.next/
-dist/
-build/
-.pnpm-store/
-*.log
-.DS_Store

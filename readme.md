@@ -2,35 +2,28 @@
 
 Study conversations where they happen. Analyze with tools you trust.
 
-**Services**
-- `transport-server`: LiveKit media server.
-- `agent-runner`: FastAPI + Pipecat agent pipeline.
-- `web-client`: Next.js UI.
+**Start Here (Docker)**
+Requires Docker + Docker Compose.
 
-**Quickstart (Docker)**
-1. Create env files.
+1. Move into the main recipe.
+```bash
+cd recipes/r0-dev-exploration
+```
+2. Create env files.
 ```bash
 cp agent-runner/.env.runner.example agent-runner/.env.runner
 cp web-client/.env.web.example web-client/.env.web
 ```
-2. Fill in API keys.
-3. Start the stack.
+3. Fill in API keys.
+4. Start the stack.
 ```bash
 make start
 ```
-4. Open `http://localhost:3000` and start a call.
+5. Open `http://localhost:3000` and start a call.
 
-**Validate**
-- Health check: `http://localhost:7860/health` should return JSON.
+Health check: `http://localhost:7860/health` should return JSON.
 
-**Common Commands**
-- `make start`: build and start services.
-- `make stop`: stop services.
-- `make test`: run available checks.
+**More**
 
-**Environment**
-- `agent-runner/.env.runner`: `DEEPGRAM_API_KEY`, `OPENAI_API_KEY`, `CARTESIA_API_KEY`, `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`.
-- `web-client/.env.web`: `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `BOT_RUNNER_URL`.
-
-Keep `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` consistent across both services.
-For Docker Compose, set `BOT_RUNNER_URL=http://agent-runner:7860/`.
+- `recipes/r1-eval-s2s-openai/README.md`: eval pipeline using OpenAI Realtime.
+- `notebooks/README.md`: notebook setup and usage.
