@@ -225,3 +225,6 @@ client/.turbo/
 client/.vercel
 client/.env*.local
 client/*.tsbuildinfo
+
+# Server recordings
+server/recordings/

@@ -1,0 +1,38 @@
+services:
+  bastion:
+    image: ubuntu:24.04
+    # Keep container alive so VS Code can attach
+    command: bash -lc "sleep infinity"
+    volumes:
+      - ..:/workspace:cached
+
+  server:
+    build:
+      context: ../server
+      dockerfile: Dockerfile.local
+    command: ["/app/.venv/bin/python", "bot.py", "--host", "0.0.0.0", "--port", "7860"]
+    env_file:
+      - ../server/.env
+    volumes:
+      - ../server:/app:cached
+      - server-venv:/app/.venv
+    ports:
+      - "7860:7860"
+
+  client:
+    build:
+      context: ../client
+      dockerfile: Dockerfile.local
+    env_file:
+      - ../client/.env
+    volumes:
+      - ../client:/web:cached
+      - client-node-modules:/web/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+
+volumes:
+  server-venv:
+  client-node-modules:

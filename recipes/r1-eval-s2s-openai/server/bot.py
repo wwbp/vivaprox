@@ -90,12 +90,7 @@ async def run_bot(transport: BaseTransport):
         session_properties=session_properties,
     )
 
-    messages = [
-        {
-            "role": "system",
-            "content": "You are a friendly AI assistant. Respond naturally and keep your answers conversational.",
-        },
-    ]
+    messages = []
 
     context = LLMContext(messages)
     user_aggregator, assistant_aggregator = LLMContextAggregatorPair(
@@ -185,7 +180,8 @@ async def bot(runner_args: RunnerArguments):
                 ),
             )
         case _:
-            logger.error(f"Unsupported runner arguments type: {type(runner_args)}")
+            logger.error(
+                f"Unsupported runner arguments type: {type(runner_args)}")
             return
 
     await run_bot(transport)

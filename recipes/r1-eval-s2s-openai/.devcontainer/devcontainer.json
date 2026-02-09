@@ -1,0 +1,25 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/docker-existing-dockerfile
+{
+  "name": "vivaprox r1-eval-s2s-openai",
+  "dockerComposeFile": ["./docker-compose.yml"],
+  "service": "bastion",
+  "workspaceFolder": "/workspace",
+  "forwardPorts": [3000, 7860],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "eamodio.gitlens",
+        "ms-azuretools.vscode-docker",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "GitHub.copilot",
+        "charliermarsh.ruff",
+        "ms-vscode.makefile-tools",
+        "ms-python.vscode-pylance",
+        "ms-python.mypy-type-checker"
+      ]
+    }
+  }
+}
