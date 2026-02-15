@@ -2,6 +2,12 @@
 
 Full local stack: LiveKit server, bot runner, bot test client, Meet UI, Concierge admin.
 
+## Status
+
+- This is a janky prototype and not production-ready.
+- Room management logic needs design and implementation work.
+- Bot-to-room management also needs additional design and implementation work.
+
 ## Quickstart
 
 Prereqs:
