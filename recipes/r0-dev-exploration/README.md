@@ -3,6 +3,10 @@
 Primary stack: LiveKit media server + Pipecat agent runner + Next.js client.
 
 **Quickstart (Docker)**
+**Prereqs**
+- Docker Desktop installed and running.
+- API keys (see `.env` examples below).
+
 1. Move into this recipe.
 ```bash
 cd recipes/r0-dev-exploration
