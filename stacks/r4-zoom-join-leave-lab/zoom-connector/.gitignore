@@ -1,0 +1,5 @@
+.env.connector
+.env.connector.local
+.venv/
+__pycache__/
+*.pyc
