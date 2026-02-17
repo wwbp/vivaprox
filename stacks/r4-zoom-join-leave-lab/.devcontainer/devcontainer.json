@@ -1,0 +1,6 @@
+{
+  "name": "r4-zoom-join-leave-lab",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "bastion",
+  "workspaceFolder": "/workspace"
+}

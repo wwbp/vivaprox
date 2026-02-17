@@ -1,0 +1,51 @@
+services:
+  bastion:
+    image: ubuntu:24.04
+    command: bash -lc "sleep infinity"
+    volumes:
+      - ..:/workspace:cached
+
+  zoom-connector:
+    build:
+      context: ../zoom-connector
+      dockerfile: Dockerfile.local
+    env_file:
+      - ../zoom-connector/.env.connector
+    volumes:
+      - ../zoom-connector:/app:cached
+      - zoom-connector-venv:/app/.venv
+    ports:
+      - "8787:8787"
+
+  agent-runner:
+    build:
+      context: ../agent-runner
+      dockerfile: Dockerfile.local
+    env_file:
+      - ../agent-runner/.env.runner
+    volumes:
+      - ../agent-runner:/app:cached
+      - agent-runner-venv:/app/.venv
+    ports:
+      - "7860:7860"
+    depends_on:
+      - zoom-connector
+
+  concierge-controller:
+    build:
+      context: ../concierge-controller
+      dockerfile: Dockerfile.local
+    env_file:
+      - ../concierge-controller/.env.controller
+    volumes:
+      - ../concierge-controller:/web:cached
+      - concierge-controller-node-modules:/web/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - agent-runner
+
+volumes:
+  zoom-connector-venv:
+  agent-runner-venv:
+  concierge-controller-node-modules:

@@ -10,7 +10,7 @@ Prereqs:
 
 1. Setup files.
 ```bash
-cd recipes/livekit-meet-lab
+cd stacks/r3-livekit-meet-lab
 cp agent-runner/.env.runner.example agent-runner/.env.runner
 cp web-client/.env.web.example web-client/.env.web
 cp meet/.env.local.example meet/.env.local
@@ -44,10 +44,11 @@ make logs SERVICE=meet
 make logs SERVICE=transport-server
 ```
 
-## Recipes
+## Stacks
 
-- `recipes/r0-dev-exploration/README.md` baseline dev stack
-- `recipes/r1-eval-s2s-openai/README.md` OpenAI eval pipeline
-- `recipes/r2-eval-s2s-gemini/README.md` Gemini eval pipeline
-- `recipes/livekit-meet-lab/README.md` Meet + Concierge admin stack
+- `stacks/r0-dev-exploration/README.md` baseline dev stack
+- `stacks/r1-eval-s2s-openai/README.md` OpenAI eval pipeline
+- `stacks/r2-eval-s2s-gemini/README.md` Gemini eval pipeline
+- `stacks/r3-livekit-meet-lab/README.md` Meet + Concierge admin stack
+- `stacks/r4-zoom-join-leave-lab/README.md` Zoom join/leave control-plane stack
 - `notebooks/README.md` notebook workflow

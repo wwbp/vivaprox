@@ -1,0 +1,14 @@
+[project]
+name = "r4-zoom-connector"
+version = "0.1.0"
+description = "Minimal mock Zoom connector for r4 feasibility loop"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.116.1",
+  "uvicorn[standard]>=0.35.0",
+  "python-dotenv>=1.1.1",
+  "loguru>=0.7.3",
+]
+
+[tool.uv]
+package = false
