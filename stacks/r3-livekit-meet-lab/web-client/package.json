@@ -6,6 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "test:api": "node --test --test-concurrency=1 tests/concierge-api.test.mjs",
+    "test:load": "node --test --test-concurrency=1 tests/concierge-load.test.mjs",
     "lint": "next lint",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

@@ -54,8 +54,8 @@ export const WelcomeView = ({
             Voice AI quickstart
           </a>
           . Admin controls are available in{' '}
-          <a href="/concierge" className="underline">
-            Concierge
+          <a href="/desk" className="underline">
+            Desk
           </a>
           .
         </p>

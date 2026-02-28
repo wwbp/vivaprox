@@ -4,6 +4,7 @@ from typing import Dict, Any, Optional
 
 from fastapi import FastAPI, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from livekit import api
 from loguru import logger
 
@@ -40,6 +41,12 @@ def create_app():
 
 
 app = create_app()
+
+
+def _room_slug(room_name: str) -> str:
+    slug = "".join(ch if ch.isalnum() else "_" for ch in room_name.lower())
+    slug = slug.strip("_")
+    return slug[:24] or "room"
 
 
 async def create_livekit_room_and_token(
@@ -93,6 +100,7 @@ async def start_bot(request: Request, background_tasks: BackgroundTasks):
     Expected request body format:
     {
         "room_name": "voice_assistant_room_1234",  # Room the client will join
+        "bot_identity": "bot_roomA_ab12cd34",      # Optional; generated if omitted
         "room_config": {
             "agents": [{"agent_name": "my_bot"}]  # Optional
         },
@@ -109,7 +117,14 @@ async def start_bot(request: Request, background_tasks: BackgroundTasks):
     }
     """
     try:
-        body = await request.json()
+        try:
+            body = await request.json()
+        except Exception:
+            return JSONResponse({"error": "request body must be valid JSON"}, status_code=400)
+
+        if not isinstance(body, dict):
+            return JSONResponse({"error": "request body must be a JSON object"}, status_code=400)
+
         logger.debug(f"Received start request: {body}")
 
         # Debug body content types
@@ -120,16 +135,44 @@ async def start_bot(request: Request, background_tasks: BackgroundTasks):
         # Extract room name from request
         # Your client should send this after creating its own token
         room_name = body.get("room_name")
-        if not room_name:
-            return {"error": "room_name is required"}, 400
+        if not isinstance(room_name, str) or not room_name.strip():
+            return JSONResponse(
+                {"error": "room_name is required and must be a non-empty string"},
+                status_code=400,
+            )
+        room_name = room_name.strip()
 
         # Extract optional agent configuration
-        agent_name = body.get("room_config", {}).get(
-            "agents", [{}])[0].get("agent_name")
+        agent_name = None
+        room_config = body.get("room_config")
+        if isinstance(room_config, dict):
+            agents = room_config.get("agents")
+            if (
+                isinstance(agents, list)
+                and len(agents) > 0
+                and isinstance(agents[0], dict)
+            ):
+                maybe_agent_name = agents[0].get("agent_name")
+                if isinstance(maybe_agent_name, str) and maybe_agent_name.strip():
+                    agent_name = maybe_agent_name.strip()
 
-        # Generate unique identity for the bot participant
-        # This ensures each bot instance is tracked separately
-        bot_identity = f"bot_{uuid.uuid4().hex[:8]}"
+        requested_bot_identity = body.get("bot_identity")
+        if requested_bot_identity is not None:
+            if not isinstance(requested_bot_identity, str) or not requested_bot_identity.strip():
+                return JSONResponse(
+                    {"error": "bot_identity must be a non-empty string"},
+                    status_code=400,
+                )
+            bot_identity = requested_bot_identity.strip()
+            if len(bot_identity) > 128:
+                return JSONResponse(
+                    {"error": "bot_identity must be 128 characters or fewer"},
+                    status_code=400,
+                )
+        else:
+            # Generate unique identity for the bot participant.
+            # Prefixing with room slug keeps identities easy to trace in operations logs.
+            bot_identity = f"bot_{_room_slug(room_name)}_{uuid.uuid4().hex[:10]}"
 
         # Create token for the bot to join the room
         bot_token = await create_livekit_room_and_token(
@@ -160,6 +203,7 @@ async def start_bot(request: Request, background_tasks: BackgroundTasks):
         return {
             "session_id": session_id,
             "room_name": room_name,
+            "bot_identity": bot_identity,
             "message": "Bot is joining room"
         }
 
@@ -167,7 +211,7 @@ async def start_bot(request: Request, background_tasks: BackgroundTasks):
         import traceback
         logger.error(f"Error starting bot: {e}")
         logger.error(f"Full traceback:\n{traceback.format_exc()}")
-        return {"error": str(e)}, 500
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 
 @app.get("/health")

@@ -13,6 +13,32 @@ type ConnectionDetails = {
 // don't cache the results
 export const revalidate = 0;
 
+type ConnectionRequestBody = {
+  room_config?: {
+    agents?: Array<{ agent_name?: string }>;
+  };
+  custom_data?: unknown;
+};
+
+function createUniqueSuffix(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+async function parseBody(request: Request): Promise<ConnectionRequestBody> {
+  const raw = await request.text();
+  if (!raw.trim()) {
+    return {};
+  }
+  const parsed = JSON.parse(raw) as unknown;
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw new Error('Request body must be a JSON object');
+  }
+  return parsed as ConnectionRequestBody;
+}
+
 export async function POST(req: Request) {
   try {
     const config = getServerConfig();
@@ -21,13 +47,13 @@ export async function POST(req: Request) {
     const apiSecret = requireEnv(config.livekitApiSecret, 'LIVEKIT_API_SECRET');
 
     // Parse agent configuration from request body
-    const body = await req.json();
+    const body = await parseBody(req);
     const agentName: string = body?.room_config?.agents?.[0]?.agent_name;
 
     // Generate participant token
     const participantName = 'user';
-    const participantIdentity = `voice_assistant_user_${Math.floor(Math.random() * 10_000)}`;
-    const roomName = `voice_assistant_room_${Math.floor(Math.random() * 10_000)}`;
+    const participantIdentity = `voice_assistant_user_${createUniqueSuffix()}`;
+    const roomName = `voice_assistant_room_${createUniqueSuffix()}`;
 
     const participantToken = await createParticipantToken(
       { identity: participantIdentity, name: participantName },
@@ -53,10 +79,37 @@ export async function POST(req: Request) {
       });
 
       if (!botResponse.ok) {
-        console.error('Failed to start bot:', await botResponse.text());
+        const errorText = await botResponse.text();
+        return NextResponse.json(
+          {
+            error: `Failed to start bot (${botResponse.status}): ${
+              errorText || 'bot runner returned an error'
+            }`,
+          },
+          { status: 502 }
+        );
+      }
+
+      const responseText = await botResponse.text();
+      if (responseText) {
+        try {
+          const payload = JSON.parse(responseText) as { error?: unknown };
+          if (typeof payload.error === 'string' && payload.error.trim()) {
+            return NextResponse.json(
+              { error: `Failed to start bot: ${payload.error}` },
+              { status: 502 }
+            );
+          }
+        } catch {
+          // Ignore non-JSON payload on success.
+        }
       }
     } catch (error) {
-      console.error('Error contacting bot runner:', error);
+      const message = error instanceof Error ? error.message : 'Unknown bot runner error';
+      return NextResponse.json(
+        { error: `Failed to contact bot runner: ${message}` },
+        { status: 502 }
+      );
     }
 
     // Return connection details
@@ -73,8 +126,13 @@ export async function POST(req: Request) {
   } catch (error) {
     if (error instanceof Error) {
       console.error(error);
-      return new NextResponse(error.message, { status: 500 });
+      const status =
+        error instanceof SyntaxError || error.message.includes('Request body must be a JSON object')
+          ? 400
+          : 500;
+      return new NextResponse(error.message, { status });
     }
+    return new NextResponse('Unexpected error', { status: 500 });
   }
 }
 

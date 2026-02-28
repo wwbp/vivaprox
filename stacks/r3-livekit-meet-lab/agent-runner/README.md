@@ -23,5 +23,6 @@ uv run python runner.py
 
 **Environment**
 - Required keys are listed in `.env.runner.example`.
+- For the default stack, only `OPENAI_API_KEY` is required for STT/LLM/TTS.
 - `LIVEKIT_URL` must be reachable from where this service runs.
 - Optional local overrides: `.env.runner.local`.

@@ -19,10 +19,9 @@ from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineParams, PipelineTask
 from pipecat.processors.aggregators.llm_context import LLMContext
 from pipecat.processors.aggregators.llm_response_universal import LLMContextAggregatorPair
-from pipecat.services.cartesia.tts import CartesiaTTSService
-# from pipecat.services.whisper.stt import WhisperSTTService
-from pipecat.services.deepgram.stt import DeepgramSTTService
 from pipecat.services.openai.llm import OpenAILLMService
+from pipecat.services.openai.stt import OpenAISTTService
+from pipecat.services.openai.tts import OpenAITTSService
 from pipecat.transports.livekit.transport import LiveKitParams, LiveKitTransport
 
 from config import load_config, require
@@ -60,15 +59,9 @@ async def bot(runner_args: LiveKitRunnerArguments):
 
     # Initialize your services
     config = load_config()
-    # stt = WhisperSTTService()
-    stt = DeepgramSTTService(
-        api_key=require(config.deepgram_api_key, "DEEPGRAM_API_KEY")
-    )
+    stt = OpenAISTTService(api_key=require(config.openai_api_key, "OPENAI_API_KEY"))
     llm = OpenAILLMService(api_key=require(config.openai_api_key, "OPENAI_API_KEY"))
-    tts = CartesiaTTSService(
-        api_key=require(config.cartesia_api_key, "CARTESIA_API_KEY"),
-        voice_id="71a7ad14-091c-4e8e-a314-022ece01c121",
-    )
+    tts = OpenAITTSService(api_key=require(config.openai_api_key, "OPENAI_API_KEY"))
 
     # Set up conversation context
     messages = [

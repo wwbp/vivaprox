@@ -3,6 +3,7 @@ import { pushConciergeEvent } from '@/lib/concierge/events-store';
 import { getRoomServiceClient, mapRoom } from '@/lib/concierge/livekit-admin';
 
 export const dynamic = 'force-dynamic';
+const ROOM_NAME_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}$/;
 
 function noStoreHeaders(): HeadersInit {
   return {
@@ -30,39 +31,37 @@ export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
     const roomName = typeof body.name === 'string' ? body.name.trim() : '';
-    const metadata = typeof body.metadata === 'string' ? body.metadata.trim() : '';
-    const emptyTimeoutSeconds =
-      typeof body.emptyTimeout === 'number' && Number.isFinite(body.emptyTimeout)
-        ? Math.max(0, Math.floor(body.emptyTimeout))
-        : undefined;
 
     if (!roomName) {
       return badRequest('Room name is required');
     }
-    if (roomName.length > 128) {
-      return badRequest('Room name must be 128 characters or fewer');
+    if (!ROOM_NAME_PATTERN.test(roomName)) {
+      return badRequest(
+        'Room name must be 1-128 characters and use letters, numbers, "_" or "-" only'
+      );
     }
 
     const roomService = getRoomServiceClient();
-    const room = await roomService.createRoom({
-      name: roomName,
-      metadata: metadata || undefined,
-      emptyTimeout: emptyTimeoutSeconds,
-    });
+    const existingRooms = await roomService.listRooms();
+    if (existingRooms.some((room) => room.name === roomName)) {
+      return NextResponse.json(
+        { error: `Room "${roomName}" already exists` },
+        { status: 409, headers: noStoreHeaders() }
+      );
+    }
+
+    const room = await roomService.createRoom({ name: roomName });
 
     pushConciergeEvent({
       source: 'concierge',
       event: 'concierge.room.created',
       roomName,
-      payload: {
-        metadata: metadata || undefined,
-        emptyTimeout: emptyTimeoutSeconds,
-      },
     });
 
     return NextResponse.json({ room: mapRoom(room) }, { status: 201, headers: noStoreHeaders() });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to create room';
-    return NextResponse.json({ error: message }, { status: 500, headers: noStoreHeaders() });
+    const status = message.toLowerCase().includes('already exists') ? 409 : 500;
+    return NextResponse.json({ error: message }, { status, headers: noStoreHeaders() });
   }
 }

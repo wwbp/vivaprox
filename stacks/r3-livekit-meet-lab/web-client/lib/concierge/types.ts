@@ -59,6 +59,7 @@ export type ConciergeBotRequest = {
   status: 'started' | 'failed';
   requestedAt: string;
   agentName?: string;
+  botIdentity?: string;
   runnerSessionId?: string;
   error?: string;
 };
@@ -88,8 +89,40 @@ export type BotsResponse = {
   roomName: string;
   bots: ConciergeBot[];
   requests: ConciergeBotRequest[];
+  assignedBotIdentity?: string;
 };
 
 export type StartBotResponse = {
   request: ConciergeBotRequest;
+};
+
+export type ConciergeRoomHealthStatus = 'missing' | 'idle' | 'active';
+
+export type ConciergeBotHealthStatus = 'missing' | 'starting' | 'connected_no_tracks' | 'connected';
+export type ConciergeBotSubscriptionSignalStatus = 'unknown' | 'not_observed' | 'observed';
+
+export type RoomHealthResponse = {
+  roomName: string;
+  checkedAt: string;
+  overallStatus: 'ok' | 'degraded' | 'down';
+  room: {
+    status: ConciergeRoomHealthStatus;
+    exists: boolean;
+    numParticipants: number;
+    metadata?: string;
+    creationTime?: string;
+  };
+  bot: {
+    status: ConciergeBotHealthStatus;
+    assignedIdentity?: string;
+    identity?: string;
+    state?: string;
+    trackCount: number;
+    subscriptionSignal: {
+      status: ConciergeBotSubscriptionSignalStatus;
+      observedAt?: string;
+      trackSid?: string;
+      sourceEvent?: string;
+    };
+  };
 };
