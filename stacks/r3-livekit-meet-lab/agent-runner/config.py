@@ -16,9 +16,7 @@ if _LOCAL_ENV_PATH.exists():
 
 @dataclass(frozen=True)
 class Config:
-    deepgram_api_key: Optional[str]
     openai_api_key: Optional[str]
-    cartesia_api_key: Optional[str]
     livekit_url: Optional[str]
     livekit_api_key: Optional[str]
     livekit_api_secret: Optional[str]
@@ -26,9 +24,7 @@ class Config:
 
 def load_config() -> Config:
     return Config(
-        deepgram_api_key=os.getenv("DEEPGRAM_API_KEY"),
         openai_api_key=os.getenv("OPENAI_API_KEY"),
-        cartesia_api_key=os.getenv("CARTESIA_API_KEY"),
         livekit_url=os.getenv("LIVEKIT_URL"),
         livekit_api_key=os.getenv("LIVEKIT_API_KEY"),
         livekit_api_secret=os.getenv("LIVEKIT_API_SECRET"),

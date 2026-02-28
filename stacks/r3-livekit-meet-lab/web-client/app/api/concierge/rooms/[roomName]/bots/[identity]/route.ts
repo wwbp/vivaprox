@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { getBotRoomClaim, releaseBotRoomClaim } from '@/lib/concierge/bot-room-claim-store';
+import { clearBotTrackSubscriptionSignalsForRoom } from '@/lib/concierge/bot-track-subscription-store';
 import { pushConciergeEvent } from '@/lib/concierge/events-store';
 import { getRoomServiceClient } from '@/lib/concierge/livekit-admin';
 
@@ -25,8 +27,21 @@ export async function DELETE(
       );
     }
 
+    const claim = getBotRoomClaim(roomName);
+    if (claim && claim.botIdentity !== identity) {
+      return NextResponse.json(
+        {
+          error: `Bot identity mismatch: assigned bot is "${claim.botIdentity}"`,
+          assignedBotIdentity: claim.botIdentity,
+        },
+        { status: 409, headers: noStoreHeaders() }
+      );
+    }
+
     const roomService = getRoomServiceClient();
     await roomService.removeParticipant(roomName, identity);
+    releaseBotRoomClaim(roomName);
+    clearBotTrackSubscriptionSignalsForRoom(roomName);
 
     pushConciergeEvent({
       source: 'concierge',

@@ -1,5 +1,5 @@
-import { ConciergeConsole } from '@/components/concierge/concierge-console';
+import { redirect } from 'next/navigation';
 
 export default function ConciergePage() {
-  return <ConciergeConsole />;
+  redirect('/desk');
 }
