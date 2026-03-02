@@ -22,6 +22,7 @@ from pipecat.processors.aggregators.llm_response_universal import LLMContextAggr
 from pipecat.services.openai.llm import OpenAILLMService
 from pipecat.services.openai.stt import OpenAISTTService
 from pipecat.services.openai.tts import OpenAITTSService
+from pipecat.transports.livekit import transport as livekit_transport_module
 from pipecat.transports.livekit.transport import LiveKitParams, LiveKitTransport
 
 from config import load_config, require
@@ -29,6 +30,38 @@ from runner_types import LiveKitRunnerArguments
 
 logger.remove(0)
 logger.add(sys.stderr, level="DEBUG")
+
+
+def _apply_livekit_video_subscription_guard() -> None:
+    """Backport a LiveKit transport fix present in newer pipecat releases.
+
+    In pipecat 0.0.90, video tracks can still be processed even when
+    `video_in_enabled=False`, causing unbounded queue growth and OOM in
+    camera-on calls. This guard keeps video processing disabled unless
+    explicitly enabled.
+    """
+    client_cls = livekit_transport_module.LiveKitTransportClient
+    if getattr(client_cls, "_video_guard_patched", False):
+        return
+
+    original_handler = client_cls._async_on_track_subscribed
+
+    async def guarded_on_track_subscribed(self, track, publication, participant):
+        if (
+            track.kind == livekit_transport_module.rtc.TrackKind.KIND_VIDEO
+            and not self._params.video_in_enabled
+        ):
+            logger.info(
+                "Video track subscribed but video_in_enabled is false; skipping video stream "
+                f"processing for participant {participant.sid}"
+            )
+            self._video_tracks[participant.sid] = track
+            await self._callbacks.on_video_track_subscribed(participant.sid)
+            return
+        await original_handler(self, track, publication, participant)
+
+    client_cls._async_on_track_subscribed = guarded_on_track_subscribed
+    client_cls._video_guard_patched = True
 
 
 async def bot(runner_args: LiveKitRunnerArguments):
@@ -42,6 +75,9 @@ async def bot(runner_args: LiveKitRunnerArguments):
     """
     logger.info(f"Bot starting - joining room: {runner_args.room_name}")
 
+    # Guard against a known LiveKit video subscription leak in pipecat 0.0.90.
+    _apply_livekit_video_subscription_guard()
+
     # Create transport using credentials from runner
     # Notice how cleanly this separates concerns: the runner handles
     # room/token creation, the bot handles the conversation logic
@@ -52,6 +88,7 @@ async def bot(runner_args: LiveKitRunnerArguments):
         params=LiveKitParams(
             audio_in_enabled=True,
             audio_out_enabled=True,
+            video_in_enabled=False,
             vad_analyzer=SileroVADAnalyzer(params=VADParams(stop_secs=0.2)),
             turn_analyzer=LocalSmartTurnAnalyzerV3(params=SmartTurnParams()),
         ),

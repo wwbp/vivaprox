@@ -1,6 +1,7 @@
 import { randomString } from '@/lib/client-utils';
 import { getLiveKitURL } from '@/lib/getLiveKitURL';
 import { ConnectionDetails } from '@/lib/types';
+import { validateLiveKitPublicUrlForRequestHost } from '@/lib/validateLiveKitPublicUrl';
 import { AccessToken, AccessTokenOptions, VideoGrant } from 'livekit-server-sdk';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -19,6 +20,14 @@ export async function GET(request: NextRequest) {
     const region = request.nextUrl.searchParams.get('region');
     if (!LIVEKIT_URL_PUBLIC) {
       throw new Error('LIVEKIT_URL_PUBLIC (or LIVEKIT_URL) is not defined');
+    }
+    const incomingHost = request.headers.get('x-forwarded-host') ?? request.headers.get('host');
+    const hostValidationError = validateLiveKitPublicUrlForRequestHost(
+      LIVEKIT_URL_PUBLIC,
+      incomingHost,
+    );
+    if (hostValidationError) {
+      throw new Error(hostValidationError);
     }
     const livekitServerUrl = region
       ? getLiveKitURL(LIVEKIT_URL_PUBLIC, region)

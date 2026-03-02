@@ -18,6 +18,7 @@ services:
     build:
       context: ../agent-runner
       dockerfile: Dockerfile.local
+    restart: unless-stopped
     env_file:
       - ../agent-runner/.env.runner
     volumes:

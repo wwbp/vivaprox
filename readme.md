@@ -1,54 +1,66 @@
 # VivaProx
 
-Local stack for live study conversations with bots in LiveKit.
+Local lab for realtime voice bots, meeting integrations stacks.
 
-## Quickstart (Recommended)
+## Status
 
-Prereqs:
-- Docker Desktop
-- API keys: Deepgram, OpenAI, Cartesia
+Require evaluation pipeline for use case stacks.
 
-1. Setup files.
-```bash
-cd stacks/r3-livekit-meet-lab
-cp agent-runner/.env.runner.example agent-runner/.env.runner
-cp web-client/.env.web.example web-client/.env.web
-cp meet/.env.local.example meet/.env.local
-```
-2. Add keys in `agent-runner/.env.runner`:
-- `DEEPGRAM_API_KEY`
-- `OPENAI_API_KEY`
-- `CARTESIA_API_KEY`
-3. Start.
-```bash
-make start
-```
-4. Open:
-- `http://localhost:3000` bot test client
-- `http://localhost:3000/concierge` admin console
-- `http://localhost:3001` Meet UI
-5. Health: `http://localhost:7860/health`
-6. Stop:
-```bash
-make stop
-```
+## Core Tech Links
 
-## Common Commands
+- Pipecat: [docs.pipecat.ai](https://docs.pipecat.ai) | [pipecat.ai](https://www.pipecat.ai)
+- LiveKit: [docs.livekit.io](https://docs.livekit.io) | [livekit.io](https://livekit.io)
 
-```bash
-make start
-make stop
-make logs SERVICE=web-client
-make logs SERVICE=agent-runner
-make logs SERVICE=meet
-make logs SERVICE=transport-server
-```
+## Known Pitfall (LiveKit + Pipecat)
 
-## Stacks
+- In `pipecat-ai==0.0.90`, some LiveKit flows may still process inbound video tracks even when video input is disabled. In camera-on sessions this can cause `agent-runner` memory growth and container OOM (`ExitCode 137` / `OOMKilled=true`).
+- Typical symptom chain: bot drops after a few minutes, then bot-start/API calls fail (`fetch failed` / 502) because `agent-runner` exited.
+- Latest validation on March 2, 2026 (`stacks/r3-livekit-meet-lab`): single-user manual call remained stable for 18 minutes, and manual bot restart worked; multi-user longevity still pending.
+- Mitigation pattern for new stacks:
+  - Keep bot transport video ingest disabled (`video_in_enabled=False`).
+  - Add a guard so video subscriptions are ignored unless video processing is explicitly enabled.
+  - Set `agent-runner` restart policy in Compose (`restart: unless-stopped`) to reduce downtime after crashes while debugging.
 
-- `stacks/r0-dev-exploration/README.md` baseline dev stack
-- `stacks/r1-eval-s2s-openai/README.md` OpenAI eval pipeline
-- `stacks/r2-eval-s2s-gemini/README.md` Gemini eval pipeline
-- `stacks/r3-livekit-meet-lab/README.md` Meet + Concierge admin stack
-- `stacks/r4-zoom-join-leave-lab/README.md` Zoom join/leave control-plane stack
-- `notebooks/README.md` notebook workflow
+## Top View
+
+UI entry point:
+
+- User in browser (`web-client` or `meet`) talks to the bot.
+- UI captures mic audio and plays bot audio.
+
+Core loop events:
+
+1. Audio capture in browser.
+2. Relay to backend (`agent-runner`) via LiveKit/WebRTC or other transport.
+3. Transcribe or speech-to-speech ingest.
+4. LLM reasoning (plus optional tool calls).
+5. Audio synthesis (TTS or direct speech-to-speech output).
+6. Relay synthesized audio back to browser.
+7. Browser playback to user.
+
+## Tools & Tech
+
+- Containers and local orchestration: Docker Compose, Make
+- Backend services: Python, FastAPI, Pipecat
+- Frontend apps: Next.js, React
+- Realtime media/control: LiveKit + WebRTC, Zoom join/leave adapter flow
+- AI/speech APIs: OpenAI Realtime, Gemini Live, Deepgram, Cartesia
+- Exploration workflow: Jupyter notebooks with `uv`
+
+## Repo Map
+
+- `stacks/r0-dev-exploration` baseline LiveKit + agent-runner + web-client
+- `stacks/r1-eval-s2s-openai` speech-to-speech eval stack (OpenAI)
+- `stacks/r2-eval-s2s-gemini` speech-to-speech eval stack (Gemini)
+- `stacks/r3-livekit-meet-lab` Meet + Desk admin stack
+- `notebooks` exploratory notebooks for TTS/S2S experiments
+
+## Try it out
+
+1. Pick a stack in `stacks/` and open its README.
+2. Copy that stack's `.env` example files.
+3. Add required API keys.
+4. Run `make start` in the stack directory.
+5. Open the local URLs listed in that stack README.
+
+Stop with `make stop`.
