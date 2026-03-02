@@ -55,6 +55,7 @@ make setup-livekit-cloud \
   LIVEKIT_API_SECRET=<your_api_secret>
 make start
 ```
+`make setup-livekit-cloud` calls `scripts/setup_livekit_cloud.sh setup` (it only updates local env files).
 3. Verify Meet now returns a public LiveKit URL (not localhost):
 ```bash
 docker compose -f .devcontainer/docker-compose.yml exec -T meet \
@@ -74,19 +75,12 @@ Keep the ngrok process running while others test.
 
 ### Revert to local LiveKit (disconnect from cloud account)
 
-When done with remote demos, set URLs back to local defaults and restart:
-
-1. Update env files:
-- `agent-runner/.env.runner`: `LIVEKIT_URL=ws://transport-server:7880`
-- `web-client/.env.web`: `LIVEKIT_URL=ws://localhost:7880`
-- `web-client/.env.web`: `LIVEKIT_URL_INTERNAL=ws://transport-server:7880` (optional, recommended)
-- `meet/.env.local`: `LIVEKIT_URL_PUBLIC=ws://localhost:7880`
-- `meet/.env.local`: `LIVEKIT_URL_INTERNAL=ws://transport-server:7880`
-- `meet/.env.local`: `LIVEKIT_URL=ws://localhost:7880`
-2. Restart:
+When done with remote demos, switch back with:
 ```bash
+make revert-livekit-local
 make start
 ```
+`make revert-livekit-local` calls `scripts/setup_livekit_cloud.sh revert` and resets local defaults (including `devkey/secret`).
 
 ## Commands
 
@@ -96,6 +90,8 @@ make start
 - `make test`
 - `make test-bot-longevity` (minimal long-running bot drop timing test)
 - `make setup-livekit-cloud LIVEKIT_CLOUD_URL=... LIVEKIT_API_KEY=... LIVEKIT_API_SECRET=...`
+- `make revert-livekit-local`
+- `make test-livekit-tooling`
 
 Bot longevity test knobs:
 - `BOT_LONGEVITY_MAX_SECONDS=<n>` (default `1050`; test fails if bot drops before this)

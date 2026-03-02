@@ -5,7 +5,7 @@ BOT_LONGEVITY_MAX_SECONDS ?= 1050
 BOT_LONGEVITY_POLL_SECONDS ?= 5
 BOT_LONGEVITY_MESSAGE_SECONDS ?= 10
 
-.PHONY: up down start stop logs test test-unit test-integration test-bot-longevity setup-livekit-cloud
+.PHONY: up down start stop logs test test-unit test-integration test-bot-longevity setup-livekit-cloud revert-livekit-local test-livekit-tooling
 
 up:
 	$(COMPOSE) up --build -d
@@ -43,7 +43,13 @@ test-bot-longevity:
 		uv run python -m unittest -v tests.test_bot_longevity_minimal
 
 setup-livekit-cloud:
-	./scripts/setup_livekit_cloud.sh \
+	./scripts/setup_livekit_cloud.sh setup \
 		--url "$(LIVEKIT_CLOUD_URL)" \
 		--api-key "$(LIVEKIT_API_KEY)" \
 		--api-secret "$(LIVEKIT_API_SECRET)"
+
+revert-livekit-local:
+	./scripts/setup_livekit_cloud.sh revert
+
+test-livekit-tooling:
+	./scripts/test_setup_livekit_cloud.sh
