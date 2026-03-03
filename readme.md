@@ -1,4 +1,4 @@
-# VivaProx
+# Vivarium Proxemics
 
 Local lab for realtime voice bots, meeting integrations stacks.
 
