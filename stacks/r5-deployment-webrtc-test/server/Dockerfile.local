@@ -1,0 +1,30 @@
+FROM dailyco/pipecat-base:latest AS base
+
+# Install ffmpeg for audio processing
+RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
+
+# Bring in uv (fast Python installer) without leaving it in a builder image.
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+WORKDIR /app
+
+# Faster starts + saner linking when using cache mounts.
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/app/.venv/bin:$PATH"
+
+# 1) Pre-install deps in a separate layer for better caching.
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=pyproject.toml,target=/app/pyproject.toml \
+    uv sync --no-install-project --no-dev
+
+# 2) Copy app and install runtime dependencies.
+COPY . .
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --no-install-project --no-dev
+
+EXPOSE 7860
+
+CMD ["uv", "run", "bot.py"]
