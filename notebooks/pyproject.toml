@@ -11,7 +11,7 @@ dependencies = [
     "numba>=0.57,<0.60",
     "python-dotenv>=1.2.1",
     "qwen-tts==0.0.5",
-    "requests>=2.32.5",
+    "requests>=2.33.0",
     "llvmlite>=0.40,<0.43",
     "soundfile>=0.12.1",
     "torch>=2.2.0",
