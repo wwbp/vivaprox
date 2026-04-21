@@ -9,6 +9,6 @@ dependencies = [
     "fastapi>=0.119.1",
     "loguru>=0.7.3",
     "pipecat-ai[cartesia,deepgram,livekit,local-smart-turn,openai,silero,whisper]>=0.0.90",
-    "python-dotenv>=1.1.1",
+    "python-dotenv>=1.2.2",
     "uvicorn>=0.38.0",
 ]
