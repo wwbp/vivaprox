@@ -79,7 +79,8 @@ async def create_livekit_room_and_token(
             room=room_name,
             can_publish=True,
             can_subscribe=True,
-            can_publish_data=True,  # Allows bot to send text data
+            can_publish_data=True,
+            agent=True,
         )) \
         .with_ttl(timedelta(minutes=15))  # 15 minutes as timedelta
 
