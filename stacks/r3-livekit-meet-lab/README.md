@@ -1,114 +1,101 @@
 # LiveKit Meet Lab
 
-A local stack with:
-- LiveKit transport server
-- Bot runner
-- Bot test client
-- Meet UI
-- Desk admin UI
+A local development stack combining conferencing, voice agent, and admin UI in a single Next.js app.
 
-## Status
+## Services
 
-- Prototype only (not production-ready).
-- Room lifecycle and bot assignment still need more hardening.
+| Service | Port | Role |
+|---------|------|------|
+| `transport-server` | 7880 | LiveKit media server |
+| `agent-runner` | 7860 | FastAPI — spawns Pipecat voice bots |
+| `meet` | 3000 | Next.js 16 — conferencing, voice agent UI, Concierge admin |
 
 ## Quick Start
 
-Before you start:
-- Docker Desktop
-- OpenAI API key
+**Prerequisites:** Docker Desktop, OpenAI API key.
 
-1. Create local env files.
 ```bash
 cd stacks/r3-livekit-meet-lab
-cp agent-runner/.env.runner.example agent-runner/.env.runner
-cp web-client/.env.web.example web-client/.env.web
+cp agent-runner/.env.runner.example agent-runner/.env.runner   # set OPENAI_API_KEY
 cp meet/.env.local.example meet/.env.local
-```
-2. Open `agent-runner/.env.runner` and set:
-- `OPENAI_API_KEY`
-3. Start the stack.
-```bash
 make start
 ```
-4. Open these pages:
-- `http://localhost:3000` bot test client
-- `http://localhost:3000/desk` Desk admin
-- `http://localhost:3001` Meet UI
-5. Optional health check:
-- `http://localhost:7860/health`
 
-## Share Meet with ngrok (optional)
+Open:
+- `http://localhost:3000` — voice agent
+- `http://localhost:3000/desk` — Concierge admin
+- `http://localhost:3000/rooms/<name>` — Meet conferencing
+- `http://localhost:7860/health` — agent-runner health check
 
-Use this when you want someone outside your network to open your local Meet UI.
+## Commands
 
-1. Install ngrok and add your auth token (one-time):
 ```bash
-brew install ngrok/ngrok/ngrok
-ngrok config add-authtoken <YOUR_AUTHTOKEN>
+make start                          # build + start all services
+make stop                           # stop and remove volumes
+make logs SERVICE=meet              # tail service logs (agent-runner | meet | transport-server)
+make test                           # unit + integration tests
+make test-bot-longevity             # long-running bot drop timing test
+make setup-livekit-cloud \
+  LIVEKIT_CLOUD_URL=wss://... \
+  LIVEKIT_API_KEY=... \
+  LIVEKIT_API_SECRET=...            # switch to LiveKit Cloud
+make revert-livekit-local           # revert to local LiveKit
+make test-livekit-tooling           # test the cloud-switch script
 ```
-2. For remote demos, first switch LiveKit URLs to a public endpoint (recommended: LiveKit Cloud):
+
+Bot longevity test knobs (all optional):
+
+| Variable | Default | Meaning |
+|----------|---------|---------|
+| `BOT_LONGEVITY_MAX_SECONDS` | `1050` | Test fails if bot drops before this many seconds |
+| `BOT_LONGEVITY_POLL_SECONDS` | `5` | Polling interval |
+| `BOT_LONGEVITY_MESSAGE_SECONDS` | `10` | Interval between chat messages sent to bot |
+
+## Environment
+
+`LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` must match across both env files. Local defaults are `devkey` / `secret`.
+
+| File | Key variables |
+|------|--------------|
+| `agent-runner/.env.runner` | `OPENAI_API_KEY`, `LIVEKIT_URL=ws://transport-server:7880` |
+| `meet/.env.local` | `LIVEKIT_URL_PUBLIC=ws://localhost:7880`, `LIVEKIT_URL_INTERNAL=ws://transport-server:7880`, `BOT_RUNNER_URL=http://localhost:7860/` |
+
+## Remote demos with ngrok (optional)
+
+For external access, first point the stack at a public LiveKit endpoint (LiveKit Cloud recommended):
+
 ```bash
 make setup-livekit-cloud \
-  LIVEKIT_CLOUD_URL=wss://<your-project>.livekit.cloud \
-  LIVEKIT_API_KEY=<your_api_key> \
-  LIVEKIT_API_SECRET=<your_api_secret>
+  LIVEKIT_CLOUD_URL=wss://<project>.livekit.cloud \
+  LIVEKIT_API_KEY=<key> \
+  LIVEKIT_API_SECRET=<secret>
 make start
 ```
-`make setup-livekit-cloud` calls `scripts/setup_livekit_cloud.sh setup` (it only updates local env files).
-3. Verify Meet now returns a public LiveKit URL (not localhost):
+
+Verify the public URL is returned:
+
 ```bash
 docker compose -f .devcontainer/docker-compose.yml exec -T meet \
   curl -sS "http://localhost:3000/api/connection-details?roomName=smoke&participantName=smoke"
 ```
-Expected: `serverUrl` is `wss://...livekit.cloud`.
-4. Start tunnel to Meet:
+
+Then tunnel port 3000:
+
 ```bash
-ngrok http 3001
-```
-5. Share room link:
-```text
-https://<your-ngrok-domain>/rooms/<roomName>
+ngrok http 3000
 ```
 
-Keep the ngrok process running while others test.
+Share links of the form `https://<ngrok-domain>/rooms/<roomName>`.
 
-### Revert to local LiveKit (disconnect from cloud account)
+Revert when done:
 
-When done with remote demos, switch back with:
 ```bash
-make revert-livekit-local
-make start
+make revert-livekit-local && make start
 ```
-`make revert-livekit-local` calls `scripts/setup_livekit_cloud.sh revert` and resets local defaults (including `devkey/secret`).
 
-## Commands
+## Known constraints
 
-- `make start`
-- `make stop`
-- `make logs SERVICE=<service>` where service is `agent-runner`, `web-client`, `meet`, or `transport-server`
-- `make test`
-- `make test-bot-longevity` (minimal long-running bot drop timing test)
-- `make setup-livekit-cloud LIVEKIT_CLOUD_URL=... LIVEKIT_API_KEY=... LIVEKIT_API_SECRET=...`
-- `make revert-livekit-local`
-- `make test-livekit-tooling`
-
-Bot longevity test knobs:
-- `BOT_LONGEVITY_MAX_SECONDS=<n>` (default `1050`; test fails if bot drops before this)
-- `BOT_LONGEVITY_POLL_SECONDS=<n>` (default `5`)
-- `BOT_LONGEVITY_MESSAGE_SECONDS=<n>` (default `10`)
-
-## Env Notes
-
-- Keep `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` the same in:
-  - `agent-runner/.env.runner`
-  - `web-client/.env.web`
-  - `meet/.env.local`
-- Default local values:
-  - `agent-runner/.env.runner`: `LIVEKIT_URL=ws://transport-server:7880`
-  - `web-client/.env.web`: `BOT_RUNNER_URL=http://agent-runner:7860/`
-  - `web-client/.env.web`: `LIVEKIT_URL_INTERNAL=ws://transport-server:7880` (optional, recommended)
-  - `meet/.env.local`: `LIVEKIT_URL_PUBLIC=ws://localhost:7880`
-- Optional invite-link override in Desk: `MEET_BASE_URL=http://localhost:3001`.
-- Optional webhook ingest endpoint for monitoring: `POST /api/concierge/webhooks/livekit`.
-- Room-level and bot-level health endpoint: `GET /api/concierge/rooms/:roomName/health`.
+- All concierge state is in-memory — a `meet` restart clears all room claims and bot assignments.
+- `livekit-server:latest` is unpinned; pin before any production deployment.
+- LiveKit runs in `--dev` mode (`devkey`/`secret`, no security checks).
+- Token TTL is 15 minutes with no refresh path.

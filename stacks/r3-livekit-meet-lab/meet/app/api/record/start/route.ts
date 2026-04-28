@@ -1,5 +1,6 @@
 import { EgressClient, EncodedFileOutput, S3Upload } from 'livekit-server-sdk';
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerConfig } from '@/lib/config/server';
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,17 +17,8 @@ export async function GET(req: NextRequest) {
       return new NextResponse('Missing roomName parameter', { status: 403 });
     }
 
-    const {
-      LIVEKIT_API_KEY,
-      LIVEKIT_API_SECRET,
-      S3_KEY_ID,
-      S3_KEY_SECRET,
-      S3_BUCKET,
-      S3_ENDPOINT,
-      S3_REGION,
-    } = process.env;
-    const livekitUrlInternal =
-      process.env.LIVEKIT_URL_INTERNAL ?? process.env.LIVEKIT_URL_PUBLIC ?? process.env.LIVEKIT_URL;
+    const config = getServerConfig();
+    const livekitUrlInternal = config.livekitInternalUrl;
     if (!livekitUrlInternal) {
       return new NextResponse(
         'LIVEKIT_URL_INTERNAL, LIVEKIT_URL_PUBLIC, or LIVEKIT_URL must be set',
@@ -34,10 +26,11 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    const { S3_KEY_ID, S3_KEY_SECRET, S3_BUCKET, S3_ENDPOINT, S3_REGION } = process.env;
     const hostURL = new URL(livekitUrlInternal);
     hostURL.protocol = 'https:';
 
-    const egressClient = new EgressClient(hostURL.origin, LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
+    const egressClient = new EgressClient(hostURL.origin, config.livekitApiKey, config.livekitApiSecret);
 
     const existingEgresses = await egressClient.listEgress({ roomName });
     if (existingEgresses.length > 0 && existingEgresses.some((e) => e.status < 2)) {

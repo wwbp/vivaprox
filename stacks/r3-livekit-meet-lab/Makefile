@@ -23,14 +23,14 @@ logs:
 test: test-unit test-integration
 
 test-unit:
-	$(COMPOSE) up -d transport-server agent-runner web-client
+	$(COMPOSE) up -d transport-server agent-runner meet
 	$(COMPOSE) exec -T agent-runner uv run python -m unittest discover -s tests -p "test_*.py" -v
-	$(COMPOSE) exec -T web-client pnpm lint
+	$(COMPOSE) exec -T meet pnpm lint
 
 test-integration:
-	$(COMPOSE) up -d transport-server agent-runner web-client
-	$(COMPOSE) exec -T web-client pnpm test:api
-	$(COMPOSE) exec -T web-client pnpm test:load
+	$(COMPOSE) up -d transport-server agent-runner meet
+	$(COMPOSE) exec -T meet pnpm test:api
+	$(COMPOSE) exec -T meet pnpm test:load
 
 test-bot-longevity:
 	$(COMPOSE) up -d transport-server agent-runner web-client

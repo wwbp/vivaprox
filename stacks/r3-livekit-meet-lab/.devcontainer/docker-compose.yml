@@ -17,7 +17,7 @@ services:
   agent-runner:
     build:
       context: ../agent-runner
-      dockerfile: Dockerfile.local
+      dockerfile: Dockerfile
     restart: unless-stopped
     env_file:
       - ../agent-runner/.env.runner
@@ -29,35 +29,24 @@ services:
     depends_on:
       - transport-server
 
-  web-client:
-    build:
-      context: ../web-client
-      dockerfile: Dockerfile.local
-    env_file:
-      - ../web-client/.env.web
-    volumes:
-      - ../web-client:/web:cached
-      - web-client-node-modules:/web/node_modules
-    ports:
-      - "3000:3000"
-    depends_on:
-      - transport-server
-
   meet:
     build:
       context: ../meet
-      dockerfile: Dockerfile.local
+      dockerfile: Dockerfile
+      target: dev
     env_file:
       - ../meet/.env.local
+    environment:
+      - BOT_RUNNER_URL=http://agent-runner:7860/
     volumes:
       - ../meet:/app:cached
       - meet-node-modules:/app/node_modules
     ports:
-      - "3001:3000"
+      - "3000:3000"
     depends_on:
       - transport-server
+      - agent-runner
 
 volumes:
   agent-runner-venv:
-  web-client-node-modules:
   meet-node-modules:

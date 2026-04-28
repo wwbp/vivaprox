@@ -20,7 +20,7 @@
   // "features": {},
 
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  "forwardPorts": [3000, 3001, 7860, 7880],
+  "forwardPorts": [3000, 7860, 7880],
 
   // Uncomment the next line to run commands after the container is created.
   // "postCreateCommand": "cat /etc/os-release",

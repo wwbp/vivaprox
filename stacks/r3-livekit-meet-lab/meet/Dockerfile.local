@@ -1,9 +1,0 @@
-FROM node:20
-
-RUN npm install -g pnpm
-
-WORKDIR /app
-
-ENV NODE_ENV=development
-
-CMD ["sh", "-c", "pnpm install --force && pnpm dev"]

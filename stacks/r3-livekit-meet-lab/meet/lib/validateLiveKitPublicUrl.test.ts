@@ -5,7 +5,7 @@ describe('validateLiveKitPublicUrlForRequestHost', () => {
   it('accepts localhost request host with localhost livekit url', () => {
     const result = validateLiveKitPublicUrlForRequestHost(
       'ws://localhost:7880',
-      'localhost:3001',
+      'localhost:3000',
     );
     expect(result).toBeNull();
   });

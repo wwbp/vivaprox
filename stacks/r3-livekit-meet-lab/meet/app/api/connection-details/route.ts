@@ -4,35 +4,30 @@ import { ConnectionDetails } from '@/lib/types';
 import { validateLiveKitPublicUrlForRequestHost } from '@/lib/validateLiveKitPublicUrl';
 import { AccessToken, AccessTokenOptions, VideoGrant } from 'livekit-server-sdk';
 import { NextRequest, NextResponse } from 'next/server';
-
-const API_KEY = process.env.LIVEKIT_API_KEY;
-const API_SECRET = process.env.LIVEKIT_API_SECRET;
-const LIVEKIT_URL_PUBLIC = process.env.LIVEKIT_URL_PUBLIC ?? process.env.LIVEKIT_URL;
+import { getServerConfig, requireEnv } from '@/lib/config/server';
 
 const COOKIE_KEY = 'random-participant-postfix';
 
 export async function GET(request: NextRequest) {
   try {
+    const config = getServerConfig();
+    const livekitUrlPublic = requireEnv(config.livekitUrl, 'LIVEKIT_URL_PUBLIC');
+    const apiKey = requireEnv(config.livekitApiKey, 'LIVEKIT_API_KEY');
+    const apiSecret = requireEnv(config.livekitApiSecret, 'LIVEKIT_API_SECRET');
+
     // Parse query parameters
     const roomName = request.nextUrl.searchParams.get('roomName');
     const participantName = request.nextUrl.searchParams.get('participantName');
     const metadata = request.nextUrl.searchParams.get('metadata') ?? '';
     const region = request.nextUrl.searchParams.get('region');
-    if (!LIVEKIT_URL_PUBLIC) {
-      throw new Error('LIVEKIT_URL_PUBLIC (or LIVEKIT_URL) is not defined');
-    }
+
     const incomingHost = request.headers.get('x-forwarded-host') ?? request.headers.get('host');
-    const hostValidationError = validateLiveKitPublicUrlForRequestHost(
-      LIVEKIT_URL_PUBLIC,
-      incomingHost,
-    );
+    const hostValidationError = validateLiveKitPublicUrlForRequestHost(livekitUrlPublic, incomingHost);
     if (hostValidationError) {
       throw new Error(hostValidationError);
     }
-    const livekitServerUrl = region
-      ? getLiveKitURL(LIVEKIT_URL_PUBLIC, region)
-      : LIVEKIT_URL_PUBLIC;
-    let randomParticipantPostfix = request.cookies.get(COOKIE_KEY)?.value;
+
+    const livekitServerUrl = region ? getLiveKitURL(livekitUrlPublic, region) : livekitUrlPublic;
     if (livekitServerUrl === undefined) {
       throw new Error('Invalid region');
     }
@@ -44,10 +39,11 @@ export async function GET(request: NextRequest) {
       return new NextResponse('Missing required query parameter: participantName', { status: 400 });
     }
 
-    // Generate participant token
+    let randomParticipantPostfix = request.cookies.get(COOKIE_KEY)?.value;
     if (!randomParticipantPostfix) {
       randomParticipantPostfix = randomString(4);
     }
+
     const participantToken = await createParticipantToken(
       {
         identity: `${participantName}__${randomParticipantPostfix}`,
@@ -55,14 +51,15 @@ export async function GET(request: NextRequest) {
         metadata,
       },
       roomName,
+      apiKey,
+      apiSecret,
     );
 
-    // Return connection details
     const data: ConnectionDetails = {
       serverUrl: livekitServerUrl,
-      roomName: roomName,
-      participantToken: participantToken,
-      participantName: participantName,
+      roomName,
+      participantToken,
+      participantName,
     };
     return new NextResponse(JSON.stringify(data), {
       headers: {
@@ -77,8 +74,13 @@ export async function GET(request: NextRequest) {
   }
 }
 
-function createParticipantToken(userInfo: AccessTokenOptions, roomName: string) {
-  const at = new AccessToken(API_KEY, API_SECRET, userInfo);
+function createParticipantToken(
+  userInfo: AccessTokenOptions,
+  roomName: string,
+  apiKey: string,
+  apiSecret: string,
+) {
+  const at = new AccessToken(apiKey, apiSecret, userInfo);
   at.ttl = '5m';
   const grant: VideoGrant = {
     room: roomName,
@@ -92,9 +94,7 @@ function createParticipantToken(userInfo: AccessTokenOptions, roomName: string) 
 }
 
 function getCookieExpirationTime(): string {
-  var now = new Date();
-  var time = now.getTime();
-  var expireTime = time + 60 * 120 * 1000;
-  now.setTime(expireTime);
+  const now = new Date();
+  now.setTime(now.getTime() + 60 * 120 * 1000);
   return now.toUTCString();
 }
