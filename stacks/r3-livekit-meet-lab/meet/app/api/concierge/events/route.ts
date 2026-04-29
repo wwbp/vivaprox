@@ -1,13 +1,8 @@
 import { NextResponse } from 'next/server';
 import { listConciergeEvents } from '@/lib/concierge/events-store';
+import { noStoreHeaders } from '@/lib/concierge/http-utils';
 
 export const dynamic = 'force-dynamic';
-
-function noStoreHeaders(): HeadersInit {
-  return {
-    'Cache-Control': 'no-store',
-  };
-}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

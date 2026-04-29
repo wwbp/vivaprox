@@ -1,24 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getBotRoomClaim } from '@/lib/concierge/bot-room-claim-store';
 import { getLatestBotTrackSubscriptionSignal } from '@/lib/concierge/bot-track-subscription-store';
-import { getRoomServiceClient, mapParticipant, mapRoom } from '@/lib/concierge/livekit-admin';
+import { noStoreHeaders } from '@/lib/concierge/http-utils';
+import { getRoomServiceClient, isBotParticipant, mapParticipant, mapRoom } from '@/lib/concierge/livekit-admin';
 import type { ConciergeBotHealthStatus, ConciergeRoomHealthStatus } from '@/lib/concierge/types';
 
 export const dynamic = 'force-dynamic';
 const SUBSCRIPTION_SIGNAL_MAX_AGE_MS = 15 * 60 * 1000;
-
-function noStoreHeaders(): HeadersInit {
-  return {
-    'Cache-Control': 'no-store',
-  };
-}
-
-function isBotParticipant(participant: { identity: string; name?: string }): boolean {
-  if (participant.identity.startsWith('bot_')) {
-    return true;
-  }
-  return participant.name?.toLowerCase() === 'assistant';
-}
 
 function computeOverallStatus(
   roomStatus: ConciergeRoomHealthStatus,
@@ -46,7 +34,7 @@ export async function GET(_request: Request, context: { params: Promise<{ roomNa
 
     const roomService = getRoomServiceClient();
     const claim = getBotRoomClaim(roomName);
-    const rooms = await roomService.listRooms();
+    const rooms = await roomService.listRooms([roomName]);
     const room = rooms.find((candidate) => candidate.name === roomName);
     if (!room) {
       const roomStatus: ConciergeRoomHealthStatus = 'missing';

@@ -1,5 +1,5 @@
 const STORE_KEY = '__concierge_bot_room_claim_store__';
-const CLAIM_TTL_MS = 2 * 60 * 1000;
+const CLAIM_TTL_MS = 40 * 60 * 1000;
 
 type BotRoomClaim = {
   roomName: string;

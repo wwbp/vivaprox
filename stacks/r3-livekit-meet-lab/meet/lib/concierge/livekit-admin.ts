@@ -109,6 +109,10 @@ export function getWebhookReceiver(): WebhookReceiver {
   return new WebhookReceiver(livekitApiKey, livekitApiSecret);
 }
 
+export function isBotParticipant(participant: { identity: string; name?: string }): boolean {
+  return participant.identity.startsWith('bot_') || participant.name?.toLowerCase() === 'assistant';
+}
+
 export function mapTrack(track: TrackLike): ConciergeTrack {
   return {
     sid: track.sid ?? '',

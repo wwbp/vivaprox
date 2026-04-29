@@ -27,24 +27,13 @@ from pipecat.transports.livekit.transport import LiveKitParams, LiveKitTransport
 from config import load_config, require
 from runner_types import LiveKitRunnerArguments
 
-logger.remove(0)
+logger.remove()
 logger.add(sys.stderr, level="DEBUG")
 
 
 async def bot(runner_args: LiveKitRunnerArguments):
-    """Main bot entry point called by the FastAPI runner.
-
-    This function receives the room credentials and sets up the entire
-    bot pipeline. It runs until the conversation ends.
-
-    Args:
-        runner_args: Contains url, token, room_name from the runner
-    """
     logger.info(f"Bot starting - joining room: {runner_args.room_name}")
 
-    # Create transport using credentials from runner
-    # Notice how cleanly this separates concerns: the runner handles
-    # room/token creation, the bot handles the conversation logic
     transport = LiveKitTransport(
         url=runner_args.url,
         token=runner_args.token,
@@ -58,13 +47,12 @@ async def bot(runner_args: LiveKitRunnerArguments):
         ),
     )
 
-    # Initialize your services
     config = load_config()
-    stt = OpenAISTTService(api_key=require(config.openai_api_key, "OPENAI_API_KEY"))
-    llm = OpenAILLMService(api_key=require(config.openai_api_key, "OPENAI_API_KEY"))
-    tts = OpenAITTSService(api_key=require(config.openai_api_key, "OPENAI_API_KEY"))
+    openai_api_key = require(config.openai_api_key, "OPENAI_API_KEY")
+    stt = OpenAISTTService(api_key=openai_api_key)
+    llm = OpenAILLMService(api_key=openai_api_key)
+    tts = OpenAITTSService(api_key=openai_api_key)
 
-    # Set up conversation context
     messages = [
         {
             "role": "system",
@@ -78,7 +66,6 @@ async def bot(runner_args: LiveKitRunnerArguments):
     context = LLMContext(messages)
     context_aggregator = LLMContextAggregatorPair(context)
 
-    # Build the processing pipeline
     pipeline = Pipeline(
         [
             transport.input(),
@@ -99,11 +86,9 @@ async def bot(runner_args: LiveKitRunnerArguments):
         ),
     )
 
-    # Event handler: Start talking when first participant joins
     @transport.event_handler("on_first_participant_joined")
     async def on_first_participant_joined(transport, participant_id):
         logger.info(f"First participant joined: {participant_id}")
-        # Small delay to ensure audio stream is ready
         await asyncio.sleep(1)
         await task.queue_frame(
             TTSSpeakFrame(
@@ -111,33 +96,24 @@ async def bot(runner_args: LiveKitRunnerArguments):
             )
         )
 
-    # Event handler: Handle text messages from client
-    # This allows your client to send text that gets processed as speech
     @transport.event_handler("on_data_received")
     async def on_data_received(transport, data, participant_id):
         logger.info(f"Received data from participant {participant_id}: {data}")
         json_data = json.loads(data)
-
-        # Log timestamp type and value
-        logger.debug(
-            f"Timestamp type: {type(json_data['timestamp'])}, Value: {json_data['timestamp']}")
-
-        # Convert text message into speech input frames
-        # This interrupts the bot if it's currently speaking
+        timestamp = json_data.get("timestamp", 0)
         await task.queue_frames(
             [
                 InterruptionFrame(),
                 UserStartedSpeakingFrame(),
                 TranscriptionFrame(
                     user_id=participant_id,
-                    timestamp=json_data["timestamp"],
-                    text=json_data["message"],
+                    timestamp=timestamp,
+                    text=json_data.get("message", ""),
                 ),
                 UserStoppedSpeakingFrame(),
             ],
         )
 
-    # Run the pipeline until completion
     runner = PipelineRunner()
     await runner.run(task)
 

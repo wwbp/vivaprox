@@ -1,15 +1,10 @@
 import { NextResponse } from 'next/server';
 import { pushConciergeEvent } from '@/lib/concierge/events-store';
+import { noStoreHeaders } from '@/lib/concierge/http-utils';
 import { getRoomServiceClient, mapRoom } from '@/lib/concierge/livekit-admin';
 
 export const dynamic = 'force-dynamic';
 const ROOM_NAME_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}$/;
-
-function noStoreHeaders(): HeadersInit {
-  return {
-    'Cache-Control': 'no-store',
-  };
-}
 
 function badRequest(message: string) {
   return NextResponse.json({ error: message }, { status: 400, headers: noStoreHeaders() });

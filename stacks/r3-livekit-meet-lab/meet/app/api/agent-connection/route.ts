@@ -87,15 +87,23 @@ export async function POST(req: Request) {
     const botRunnerUrl = requireEnv(config.botRunnerUrl, 'BOT_RUNNER_URL');
     const apiUrl = botRunnerUrl.endsWith('/') ? botRunnerUrl : `${botRunnerUrl}/`;
     try {
-      const botResponse = await fetch(`${apiUrl}start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          room_name: roomName,
-          room_config: body.room_config,
-          custom_data: body.custom_data,
-        }),
-      });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      let botResponse: Response;
+      try {
+        botResponse = await fetch(`${apiUrl}start`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            room_name: roomName,
+            room_config: body.room_config,
+            custom_data: body.custom_data,
+          }),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
 
       if (!botResponse.ok) {
         const errorText = await botResponse.text();

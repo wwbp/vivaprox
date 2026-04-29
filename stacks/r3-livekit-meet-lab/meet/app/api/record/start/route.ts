@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
      */
 
     if (roomName === null) {
-      return new NextResponse('Missing roomName parameter', { status: 403 });
+      return new NextResponse('Missing roomName parameter', { status: 400 });
     }
 
     const config = getServerConfig();

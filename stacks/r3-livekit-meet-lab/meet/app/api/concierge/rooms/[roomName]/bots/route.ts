@@ -7,7 +7,8 @@ import {
 } from '@/lib/concierge/bot-room-claim-store';
 import { acquireBotStartLock, releaseBotStartLock } from '@/lib/concierge/bot-start-lock-store';
 import { pushConciergeEvent } from '@/lib/concierge/events-store';
-import { getRoomServiceClient, mapParticipant } from '@/lib/concierge/livekit-admin';
+import { noStoreHeaders } from '@/lib/concierge/http-utils';
+import { getRoomServiceClient, isBotParticipant, mapParticipant } from '@/lib/concierge/livekit-admin';
 import { getServerConfig, requireEnv } from '@/lib/config/server';
 
 export const dynamic = 'force-dynamic';
@@ -18,19 +19,6 @@ type BotRunnerResponse = {
   message?: string;
   error?: string;
 };
-
-function noStoreHeaders(): HeadersInit {
-  return {
-    'Cache-Control': 'no-store',
-  };
-}
-
-function isBotParticipant(participant: { identity: string; name?: string }): boolean {
-  if (participant.identity.startsWith('bot_')) {
-    return true;
-  }
-  return participant.name?.toLowerCase() === 'assistant';
-}
 
 function toBotRunnerStartUrl(botRunnerUrl: string): string {
   const normalized = botRunnerUrl.endsWith('/') ? botRunnerUrl : `${botRunnerUrl}/`;

@@ -1,4 +1,5 @@
 import type { ConciergeBotRequest } from '@/lib/concierge/types';
+import { randomId } from '@/lib/concierge/http-utils';
 
 const MAX_REQUESTS = 300;
 const STORE_KEY = '__concierge_bot_request_store__';
@@ -13,18 +14,11 @@ function getStore(): BotRequestStore {
   return globalState[STORE_KEY];
 }
 
-function createId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
 export function addBotRequest(
   request: Omit<ConciergeBotRequest, 'id' | 'requestedAt'> & { requestedAt?: string }
 ): ConciergeBotRequest {
   const entry: ConciergeBotRequest = {
-    id: createId(),
+    id: randomId(),
     requestedAt: request.requestedAt ?? new Date().toISOString(),
     ...request,
   };

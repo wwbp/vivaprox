@@ -2,15 +2,10 @@ import { NextResponse } from 'next/server';
 import { releaseBotRoomClaim } from '@/lib/concierge/bot-room-claim-store';
 import { clearBotTrackSubscriptionSignalsForRoom } from '@/lib/concierge/bot-track-subscription-store';
 import { pushConciergeEvent } from '@/lib/concierge/events-store';
+import { noStoreHeaders } from '@/lib/concierge/http-utils';
 import { getRoomServiceClient, mapRoom } from '@/lib/concierge/livekit-admin';
 
 export const dynamic = 'force-dynamic';
-
-function noStoreHeaders(): HeadersInit {
-  return {
-    'Cache-Control': 'no-store',
-  };
-}
 
 function parseRoomName(value: string): string {
   return value.trim();

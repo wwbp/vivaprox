@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server';
+import { noStoreHeaders } from '@/lib/concierge/http-utils';
 
 export const dynamic = 'force-dynamic';
-
-function noStoreHeaders(): HeadersInit {
-  return {
-    'Cache-Control': 'no-store',
-  };
-}
 
 function trimTrailingSlash(value: string): string {
   return value.endsWith('/') ? value.slice(0, -1) : value;

@@ -2,15 +2,10 @@ import { NextResponse } from 'next/server';
 import { getBotRoomClaim, releaseBotRoomClaim } from '@/lib/concierge/bot-room-claim-store';
 import { clearBotTrackSubscriptionSignalsForRoom } from '@/lib/concierge/bot-track-subscription-store';
 import { pushConciergeEvent } from '@/lib/concierge/events-store';
+import { noStoreHeaders } from '@/lib/concierge/http-utils';
 import { getRoomServiceClient } from '@/lib/concierge/livekit-admin';
 
 export const dynamic = 'force-dynamic';
-
-function noStoreHeaders(): HeadersInit {
-  return {
-    'Cache-Control': 'no-store',
-  };
-}
 
 export async function DELETE(
   _request: Request,

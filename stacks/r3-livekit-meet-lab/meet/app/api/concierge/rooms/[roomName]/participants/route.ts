@@ -1,15 +1,10 @@
 import { NextResponse } from 'next/server';
 import { pushConciergeEvent } from '@/lib/concierge/events-store';
+import { noStoreHeaders } from '@/lib/concierge/http-utils';
 import { getRoomServiceClient, mapParticipant } from '@/lib/concierge/livekit-admin';
 import { diffRoomPresence } from '@/lib/concierge/participant-presence-store';
 
 export const dynamic = 'force-dynamic';
-
-function noStoreHeaders(): HeadersInit {
-  return {
-    'Cache-Control': 'no-store',
-  };
-}
 
 export async function GET(_request: Request, context: { params: Promise<{ roomName: string }> }) {
   try {

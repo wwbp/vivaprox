@@ -5,17 +5,12 @@ import {
   recordBotTrackSubscriptionSignal,
 } from '@/lib/concierge/bot-track-subscription-store';
 import { pushConciergeEvent } from '@/lib/concierge/events-store';
+import { noStoreHeaders } from '@/lib/concierge/http-utils';
 import { getWebhookReceiver, mapWebhookEvent } from '@/lib/concierge/livekit-admin';
 import type { ConciergeEvent } from '@/lib/concierge/types';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-
-function noStoreHeaders(): HeadersInit {
-  return {
-    'Cache-Control': 'no-store',
-  };
-}
 
 function readTrackSidFromPayload(payload: unknown): string | undefined {
   if (typeof payload !== 'object' || payload === null) {
