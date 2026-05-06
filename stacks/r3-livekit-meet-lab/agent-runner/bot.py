@@ -1,7 +1,11 @@
 import asyncio
 import json
+import os
 import sys
 from loguru import logger
+from PIL import Image
+
+from livekit import rtc
 
 from pipecat.audio.turn.smart_turn.base_smart_turn import SmartTurnParams
 from pipecat.audio.turn.smart_turn.local_smart_turn_v3 import LocalSmartTurnAnalyzerV3
@@ -26,6 +30,32 @@ from pipecat.transports.livekit.transport import LiveKitParams, LiveKitTransport
 
 from config import load_config, require
 from runner_types import LiveKitRunnerArguments
+
+_AVATAR_PATH = os.path.join(os.path.dirname(__file__), "avatar.png")
+_avatar_tasks: set = set()
+
+
+async def _publish_avatar(room: rtc.Room) -> None:
+    img = Image.open(_AVATAR_PATH).convert("RGBA")
+    w, h = img.size
+    frame = rtc.VideoFrame(w, h, rtc.VideoBufferType.RGBA, img.tobytes())
+    source = rtc.VideoSource(w, h)
+
+    track = rtc.LocalVideoTrack.create_video_track("avatar", source)
+    await room.local_participant.publish_track(track)
+    logger.info("Avatar video track published")
+
+    async def _frame_loop():
+        try:
+            while True:
+                source.capture_frame(frame)
+                await asyncio.sleep(1)
+        except asyncio.CancelledError:
+            pass
+
+    task = asyncio.create_task(_frame_loop())
+    _avatar_tasks.add(task)
+    task.add_done_callback(_avatar_tasks.discard)
 
 logger.remove()
 logger.add(sys.stderr, level="DEBUG")
@@ -85,6 +115,10 @@ async def bot(runner_args: LiveKitRunnerArguments):
             enable_usage_metrics=True,
         ),
     )
+
+    @transport.event_handler("on_connected")
+    async def on_connected(transport):
+        await _publish_avatar(transport._client.room)
 
     @transport.event_handler("on_first_participant_joined")
     async def on_first_participant_joined(transport, participant_id):

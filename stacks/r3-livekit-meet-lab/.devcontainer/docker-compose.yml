@@ -1,18 +1,46 @@
 services:
   bastion:
     image: ubuntu:24.04
-    # Keep container alive so VS Code can attach
     command: bash -lc "sleep infinity"
     volumes:
       - ..:/workspace:cached
 
+  redis:
+    image: redis:7-alpine
+    command: redis-server --bind 0.0.0.0 --protected-mode no
+    ports:
+      - "6379:6379"
+
   transport-server:
     image: livekit/livekit-server:latest
-    command: ["--dev", "--bind", "0.0.0.0", "--node-ip", "127.0.0.1"]
+    command: ["--dev", "--bind", "0.0.0.0", "--config", "/config/livekit.yaml"]
     ports:
       - "7880:7880/tcp"
       - "7881:7881/tcp"
       - "7882:7882/udp"
+    volumes:
+      - ./livekit.yaml:/config/livekit.yaml:ro
+    depends_on:
+      - redis
+
+  egress:
+    image: livekit/egress:latest
+    cap_add:
+      - SYS_ADMIN
+    environment:
+      EGRESS_CONFIG_BODY: |
+        log_level: debug
+        api_key: devkey
+        api_secret: secret
+        ws_url: ws://transport-server:7880
+        insecure: true
+        redis:
+          address: redis:6379
+    volumes:
+      - ../recordings:/recordings
+    depends_on:
+      - transport-server
+      - redis
 
   agent-runner:
     build:

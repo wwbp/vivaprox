@@ -5,66 +5,70 @@ import { getServerConfig } from '@/lib/config/server';
 export async function GET(req: NextRequest) {
   try {
     const roomName = req.nextUrl.searchParams.get('roomName');
-
-    /**
-     * CAUTION:
-     * for simplicity this implementation does not authenticate users and therefore allows anyone with knowledge of a roomName
-     * to start/stop recordings for that room.
-     * DO NOT USE THIS FOR PRODUCTION PURPOSES AS IS
-     */
-
-    if (roomName === null) {
+    if (!roomName) {
       return new NextResponse('Missing roomName parameter', { status: 400 });
     }
 
     const config = getServerConfig();
-    const livekitUrlInternal = config.livekitInternalUrl;
-    if (!livekitUrlInternal) {
-      return new NextResponse(
-        'LIVEKIT_URL_INTERNAL, LIVEKIT_URL_PUBLIC, or LIVEKIT_URL must be set',
-        { status: 500 },
-      );
+    if (!config.livekitInternalUrl) {
+      return new NextResponse('LiveKit server URL is not configured', { status: 500 });
     }
 
-    const { S3_KEY_ID, S3_KEY_SECRET, S3_BUCKET, S3_ENDPOINT, S3_REGION } = process.env;
-    const hostURL = new URL(livekitUrlInternal);
-    hostURL.protocol = 'https:';
+    const hostURL = new URL(config.livekitInternalUrl);
+    hostURL.protocol = hostURL.protocol === 'ws:' ? 'http:' : 'https:';
 
-    const egressClient = new EgressClient(hostURL.origin, config.livekitApiKey, config.livekitApiSecret);
+    const egressClient = new EgressClient(
+      hostURL.origin,
+      config.livekitApiKey,
+      config.livekitApiSecret,
+    );
 
-    const existingEgresses = await egressClient.listEgress({ roomName });
-    if (existingEgresses.length > 0 && existingEgresses.some((e) => e.status < 2)) {
+    const existing = await egressClient.listEgress({ roomName });
+    if (existing.some((e) => e.status < 2)) {
       return new NextResponse('Meeting is already being recorded', { status: 409 });
     }
 
-    const fileOutput = new EncodedFileOutput({
-      filepath: `${new Date(Date.now()).toISOString()}-${roomName}.mp4`,
-      output: {
-        case: 's3',
-        value: new S3Upload({
-          endpoint: S3_ENDPOINT,
-          accessKey: S3_KEY_ID,
-          secret: S3_KEY_SECRET,
-          region: S3_REGION,
-          bucket: S3_BUCKET,
-        }),
-      },
-    });
+    const fileOutput = buildFileOutput(roomName);
 
     await egressClient.startRoomCompositeEgress(
       roomName,
-      {
-        file: fileOutput,
-      },
-      {
-        layout: 'speaker',
-      },
+      { file: fileOutput },
+      { layout: 'grid' },
     );
 
     return new NextResponse(null, { status: 200 });
   } catch (error) {
-    if (error instanceof Error) {
-      return new NextResponse(error.message, { status: 500 });
-    }
+    const message = error instanceof Error ? error.message : 'Failed to start recording';
+    return new NextResponse(message, { status: 500 });
   }
+}
+
+function buildFileOutput(roomName: string): EncodedFileOutput {
+  const safeRoom = roomName.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const filename = `${timestamp}-${safeRoom}.mp4`;
+
+  if (process.env.STORAGE_BACKEND === 'local') {
+    const basePath = process.env.RECORDINGS_PATH ?? '/recordings';
+    return new EncodedFileOutput({ filepath: `${basePath}/${filename}` });
+  }
+
+  const { S3_KEY_ID, S3_KEY_SECRET, S3_BUCKET, S3_REGION, S3_ENDPOINT } = process.env;
+  if (!S3_KEY_ID || !S3_KEY_SECRET || !S3_BUCKET || !S3_REGION) {
+    throw new Error('Recording requires S3_KEY_ID, S3_KEY_SECRET, S3_BUCKET, and S3_REGION');
+  }
+
+  return new EncodedFileOutput({
+    filepath: `recordings/${filename}`,
+    output: {
+      case: 's3',
+      value: new S3Upload({
+        accessKey: S3_KEY_ID,
+        secret: S3_KEY_SECRET,
+        bucket: S3_BUCKET,
+        region: S3_REGION,
+        ...(S3_ENDPOINT ? { endpoint: S3_ENDPOINT } : {}),
+      }),
+    },
+  });
 }

@@ -22,8 +22,10 @@ export function MicrophoneSettings() {
   );
 
   React.useEffect(() => {
-    // enable Krisp by default on non-low power devices
-    setNoiseFilterEnabled(!isLowPowerDevice());
+    if (isLowPowerDevice()) return;
+    Promise.resolve(setNoiseFilterEnabled(true)).catch((e: unknown) => {
+      console.warn('Krisp noise filter unavailable (no license?):', e instanceof Error ? e.message : e);
+    });
   }, []);
   return (
     <div

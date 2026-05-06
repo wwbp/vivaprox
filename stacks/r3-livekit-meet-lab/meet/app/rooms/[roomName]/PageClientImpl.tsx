@@ -13,6 +13,7 @@ import {
   RoomContext,
   VideoConference,
 } from '@livekit/components-react';
+import { SettingsMenu } from '@/lib/SettingsMenu';
 import {
   ExternalE2EEKeyProvider,
   RoomOptions,
@@ -259,7 +260,7 @@ function VideoConferenceComponent(props: {
       <RoomContext.Provider value={room}>
         <KeyboardShortcuts />
         <ConferenceErrorBoundary onRecover={handleOnLeave}>
-          <VideoConference chatMessageFormatter={formatChatMessageLinks} />
+          <VideoConference chatMessageFormatter={formatChatMessageLinks} SettingsComponent={SettingsMenu} />
         </ConferenceErrorBoundary>
         <DebugMode />
         <RecordingIndicator />
