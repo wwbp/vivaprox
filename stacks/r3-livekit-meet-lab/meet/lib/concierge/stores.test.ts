@@ -111,11 +111,11 @@ describe('bot-room-claim-store', async () => {
     expect(getBotRoomClaim('room-a')?.botIdentity).toBe('bot_2');
   });
 
-  it('expired claims are cleaned up (TTL = 20 min)', () => {
+  it('expired claims are cleaned up (TTL = 40 min)', () => {
     const now = Date.now();
-    // Set claimedAt to 21 minutes ago.
+    // Set claimedAt to 41 minutes ago (past the 40-min TTL).
     (globalThis as Record<string, unknown>)['__concierge_bot_room_claim_store__'] = new Map([
-      ['room-a', { roomName: 'room-a', botIdentity: 'bot_old', claimedAt: now - 21 * 60 * 1000 }],
+      ['room-a', { roomName: 'room-a', botIdentity: 'bot_old', claimedAt: now - 41 * 60 * 1000 }],
     ]);
     expect(getBotRoomClaim('room-a')).toBeUndefined();
   });

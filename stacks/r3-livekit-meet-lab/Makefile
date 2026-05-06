@@ -25,7 +25,7 @@ test: test-unit test-integration
 test-unit:
 	$(COMPOSE) up -d transport-server agent-runner meet
 	$(COMPOSE) exec -T agent-runner uv run python -m unittest discover -s tests -p "test_*.py" -v
-	$(COMPOSE) exec -T meet pnpm lint
+	$(COMPOSE) exec -T meet pnpm test
 
 test-integration:
 	$(COMPOSE) up -d transport-server agent-runner meet
