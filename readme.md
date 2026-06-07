@@ -1,7 +1,5 @@
 # Vivarium Proxemics
 
-I run this realtime voice-agent lab (Pipecat + web clients).
-
 ## Quick Start
 
 1. Install Docker Desktop (with Compose) and `make`.
